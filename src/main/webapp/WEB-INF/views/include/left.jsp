@@ -22,23 +22,18 @@
 					class="nav-link active"> <i class="icon-home4"></i> <span>
 							Home </span>
 				</a></li>
-
-
-
-
-				<li class="nav-item nav-item-submenu"><a href="#"
-					class="nav-link"><i class="icon-list-unordered"></i><span>Company Masters</span></a>
-					<ul class="nav nav-group-sub" data-submenu-title="Company Masters">
-					
-						<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showCompanies"
-							class="nav-link">Companies List</a></li>
-
-					</ul></li>
 					
 				<li class="nav-item nav-item-submenu"><a href="#"
 					class="nav-link"><i class="icon-list-unordered"></i><span>Masters</span></a>
 					<ul class="nav nav-group-sub" data-submenu-title="Masters">
+					
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showCompanies"
+							class="nav-link">Companies List</a></li>
+					
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showUserTypes"
+							class="nav-link">Users Type List</a></li>
 					
 						<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showUsers"
