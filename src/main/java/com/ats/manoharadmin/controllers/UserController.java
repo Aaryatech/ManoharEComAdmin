@@ -214,7 +214,7 @@ public class UserController {
 		public ModelAndView editUser(HttpServletRequest request, HttpServletResponse response) {
 
 			ModelAndView model = null;
-
+			MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 			try {
 				model = new ModelAndView("masters/addUser");
 				
@@ -225,11 +225,16 @@ public class UserController {
 						Designation[].class);
 				List<Designation> desigList = new ArrayList<Designation>(Arrays.asList(desigArr));
 				model.addObject("desigList", desigList);
-
-				UserType[] userTypeArr = Constant.getRestTemplate().getForObject(Constant.url + "getAllUserTypes",
-						UserType[].class);
+				
+				
+				map = new LinkedMultiValueMap<>();
+				map.add("compId", companyId);
+				
+				UserType[] userTypeArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllUserTypes",
+						map, UserType[].class);
 				List<UserType> usrTypList = new ArrayList<UserType>(Arrays.asList(userTypeArr));
 				model.addObject("userTypeList", usrTypList);
+				
 				
 				Company[] compArr = Constant.getRestTemplate().getForObject(Constant.url + "getAllActiveCompany",
 						Company[].class);
@@ -239,7 +244,7 @@ public class UserController {
 				String base64encodedString = request.getParameter("userId");
 				String userId = FormValidation.DecodeKey(base64encodedString);
 
-				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map = new LinkedMultiValueMap<>();
 				map.add("userId", Integer.parseInt(userId));
 				map.add("compId", companyId);
 
@@ -328,14 +333,17 @@ public class UserController {
 		// Modified By-Mahendra Singh Created On-28-07-2020
 		// Desc- Show Language.
 		@RequestMapping(value = "/showLanguages", method = RequestMethod.GET)
-		public ModelAndView addBasicMaster(HttpServletRequest request, HttpServletResponse response) {
+		public ModelAndView showLanguages(HttpServletRequest request, HttpServletResponse response) {
 
 			ModelAndView model = null;
 			try {
 				model = new ModelAndView("masters/languageList");
+				
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
 
 				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
-				map.add("compId", 1);
+				map.add("compId", companyId);
 				Language[] langArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllLanguages", map,
 						Language[].class);
 				List<Language> langList = new ArrayList<Language>(Arrays.asList(langArr));
@@ -508,5 +516,212 @@ public class UserController {
 			}
 			return "redirect:/showLanguages";
 		}
+		
+/********************************************************************************/
+		
+		// Author-Mahendra Singh Created On-28-07-2020
+		// Modified By-Mahendra Singh Created On-28-07-2020
+		// Desc- Show User Type.
+		@RequestMapping(value = "/showUserTypes", method = RequestMethod.GET)
+		public ModelAndView showUserTypes(HttpServletRequest request, HttpServletResponse response) {
 
+			ModelAndView model = null;
+			try {
+				model = new ModelAndView("masters/userTypeList");
+
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+
+				
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("compId", companyId);
+				UserType[] usrTypArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllUserTypes", map,
+						UserType[].class);
+				List<UserType> usrTypList = new ArrayList<UserType>(Arrays.asList(usrTypArr));
+
+				for (int i = 0; i < usrTypList.size(); i++) {
+
+					usrTypList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(usrTypList.get(i).getUserTypeId())));
+				}
+
+				model.addObject("usrTypList", usrTypList);
+
+				model.addObject("title", "User Types List");
+
+			} catch (Exception e) {
+				System.out.println("Execption in /showUserTypes : " + e.getMessage());
+				e.printStackTrace();
+			}
+
+			return model;
+		}
+		
+		// Author-Mahendra Singh Created On-28-07-2020
+		// Modified By-Mahendra Singh Created On-28-07-2020
+		// Desc- Add User Type
+		@RequestMapping(value = "/addUserType", method = RequestMethod.GET)
+		public ModelAndView addUserType(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			UserType userType = new UserType();
+			try {
+					model = new ModelAndView("masters/addUserType");
+					model.addObject("userType", userType);
+					model.addObject("title", "Add User Type");
+
+			} catch (Exception e) {
+					System.out.println("Execption in /addUserType : " + e.getMessage());
+					e.printStackTrace();
+			}
+			return model;
+		}
+		
+		@RequestMapping(value = "/checkUniqueUserType", method = RequestMethod.GET)
+		@ResponseBody
+		public Info checkUniqueUserType(HttpServletRequest request, HttpServletResponse response) {
+
+			Info info = new Info();
+			try {
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+				
+				int userId = 0;
+					try {
+						userId = Integer.parseInt(request.getParameter("uId"));
+					}catch (Exception e) {
+						userId = 0;
+						e.printStackTrace();
+					}
+				String userType = request.getParameter("userType");
+			
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("userType", userType);
+				map.add("userId", userId);
+				map.add("compId", companyId);
+
+				UserType res = Constant.getRestTemplate().postForObject(Constant.url + "uniqueUserType", map, UserType.class);
+				System.out.println("userRes  ------  " + res);
+				if (res != null) {
+					info.setError(false);
+					info.setMessage("User Type Found");
+				} else {
+					info.setError(true);
+					info.setMessage("User Type Not Found");
+				}
+			} catch (Exception e) {
+				System.out.println("Execption in /checkUniqueUserType : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return info;
+		}
+		
+		
+		@RequestMapping(value = "/insertUserType", method = RequestMethod.POST)
+		public String insertUserType(HttpServletRequest request, HttpServletResponse response) {
+			UserType userTyp = new UserType();
+			
+			HttpSession session = request.getSession();
+			UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+			
+			try {
+				int userTypId = Integer.parseInt(request.getParameter("user_type_id"));
+
+				userTyp.setDelStatus(0);
+				userTyp.setExInt2(0);
+				userTyp.setExInt3(0);
+				userTyp.setExVar1("NA");
+				userTyp.setExVar2("NA");
+				userTyp.setExVar3("NA");
+				userTyp.setExVar4("NA");
+				userTyp.setComapnyIdRequired(userDetail.getUser().getCompanyId());
+				userTyp.setIsActive(Integer.parseInt(request.getParameter("status")));
+				userTyp.setExFloat1(0);
+				userTyp.setExFloat2(0);
+				userTyp.setExFloat3(0);
+				userTyp.setUserTypeId(userTypId);
+				userTyp.setUserTypeName(request.getParameter("user_type_name"));
+				userTyp.setUserTypeDesc(request.getParameter("description"));
+				userTyp.setLoginAppcatbleTo(0);
+				
+				UserType res = Constant.getRestTemplate().postForObject(Constant.url + "addUserType", userTyp,
+						UserType.class);
+
+				if (res.getUserTypeId() > 0) {
+					if (userTypId == 0)
+						session.setAttribute("successMsg", "User Type Saved Sucessfully");
+					else
+						session.setAttribute("successMsg", "User Type Update Sucessfully");
+				} else {
+					session.setAttribute("errorMsg", "Failed to Save User Type");
+				}
+			} catch (Exception e) {
+				System.out.println("Execption in /addLanguage : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return "redirect:/showUserTypes";
+		}
+		
+		@RequestMapping(value = "/editUserType", method = RequestMethod.GET)
+		public ModelAndView editUserType(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+				model = new ModelAndView("masters/addUserType");
+				
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+
+				String base64encodedString = request.getParameter("userTypeId");
+				String userTypeId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("userTypeId", Integer.parseInt(userTypeId));
+				map.add("compId", userDetail.getUser().getCompanyId());
+
+				UserType userType = Constant.getRestTemplate().postForObject(Constant.url + "getUserTypeById", map,
+						UserType.class);
+				model.addObject("userType", userType);
+
+				model.addObject("title", "Edit User Type");
+			} catch (Exception e) {
+				System.out.println("Execption in /editUserType : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return model;
+		}
+		
+		// Author-Mahendra Singh Created On-20-07-2020
+		// Modified By-Mahendra Singh Created On-20-07-2020
+		// Desc- Show City.
+		@RequestMapping(value = "/deleteUserType", method = RequestMethod.GET)
+		public String deleteUserType(HttpServletRequest request, HttpServletResponse response) {
+
+					
+					try {
+						HttpSession session = request.getSession();
+						UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+						
+						String base64encodedString = request.getParameter("userTypeId");
+						String userTypeId = FormValidation.DecodeKey(base64encodedString);
+
+						MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+						map.add("userTypeId", Integer.parseInt(userTypeId));
+						map.add("compId", userDetail.getUser().getCompanyId());
+
+						Info res = Constant.getRestTemplate().postForObject(Constant.url + "deleteUserType", map, Info.class);
+
+						if (!res.getError()) {
+							session.setAttribute("successMsg", res.getMessage());
+						} else {
+							session.setAttribute("errorMsg", res.getMessage());
+						}
+
+					} catch (Exception e) {
+						System.out.println("Execption in /deleteUserType : " + e.getMessage());
+						e.printStackTrace();
+					}
+					return "redirect:/showUserTypes";
+				}
+				
 }
