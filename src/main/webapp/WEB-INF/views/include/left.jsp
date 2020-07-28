@@ -43,6 +43,10 @@
 						<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showUsers"
 							class="nav-link">Users List</a></li>
+							
+							<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showLanguages"
+							class="nav-link">Languages List</a></li>
 
 					</ul></li>
 					

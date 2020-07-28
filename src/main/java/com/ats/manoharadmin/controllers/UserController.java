@@ -35,8 +35,10 @@ import com.ats.manoharadmin.models.City;
 import com.ats.manoharadmin.models.Company;
 import com.ats.manoharadmin.models.Designation;
 import com.ats.manoharadmin.models.Info;
+import com.ats.manoharadmin.models.Language;
 import com.ats.manoharadmin.models.MUser;
 import com.ats.manoharadmin.models.UserType;
+import com.ats.manoharadmin.models.login.UserResponse;
 
 @Controller
 @Scope("session")
@@ -320,4 +322,191 @@ public class UserController {
 			}
 			return info;
 		}
+		/********************************************************************************/
+		
+		// Author-Mahendra Singh Created On-28-07-2020
+		// Modified By-Mahendra Singh Created On-28-07-2020
+		// Desc- Show Language.
+		@RequestMapping(value = "/showLanguages", method = RequestMethod.GET)
+		public ModelAndView addBasicMaster(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+				model = new ModelAndView("masters/languageList");
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("compId", 1);
+				Language[] langArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllLanguages", map,
+						Language[].class);
+				List<Language> langList = new ArrayList<Language>(Arrays.asList(langArr));
+
+				for (int i = 0; i < langList.size(); i++) {
+
+					langList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(langList.get(i).getLangId())));
+				}
+
+				model.addObject("langList", langList);
+
+				model.addObject("title", "Language List");
+
+			} catch (Exception e) {
+				System.out.println("Execption in /showLanguages : " + e.getMessage());
+				e.printStackTrace();
+			}
+
+			return model;
+		}
+
+		// Author-Mahendra Singh Created On-28-07-2020
+		// Modified By-Mahendra Singh Created On-28-07-2020
+		// Desc- Add Language. addLanguage
+		@RequestMapping(value = "/addLanguage", method = RequestMethod.GET)
+		public ModelAndView addLanguage(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			Language lang = new Language();
+			try {
+				model = new ModelAndView("masters/addLanguage");
+				model.addObject("lang", lang);
+				model.addObject("title", "Add Language");
+
+			} catch (Exception e) {
+				System.out.println("Execption in /addLanguage : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return model;
+		}
+
+		@RequestMapping(value = "/insertLanguage", method = RequestMethod.POST)
+		public String insertLanguage(HttpServletRequest request, HttpServletResponse response) {
+			Language lang = new Language();
+			
+			HttpSession session = request.getSession();
+			UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+			
+			try {
+				int langId = Integer.parseInt(request.getParameter("lang_id"));
+
+				lang.setDelStatus(0);
+				lang.setExInt1(userDetail.getUser().getCompanyId());
+				lang.setExInt2(0);
+				lang.setExVar1("NA");
+				lang.setExVar2("NA");
+				lang.setCompanyId(1);
+				lang.setIsActive(Integer.parseInt(request.getParameter("language")));
+				lang.setLangCode(request.getParameter("language_code").toUpperCase());
+				lang.setLangId(langId);
+				lang.setLangName(request.getParameter("language_name"));
+
+				Language langRes = Constant.getRestTemplate().postForObject(Constant.url + "addLanguage", lang,
+						Language.class);
+
+				if (langRes.getLangId() > 0) {
+					if (langId == 0)
+						session.setAttribute("successMsg", "Language Saved Sucessfully");
+					else
+						session.setAttribute("successMsg", "Language Update Sucessfully");
+				} else {
+					session.setAttribute("errorMsg", "Failed to Save Language");
+				}
+			} catch (Exception e) {
+				System.out.println("Execption in /addLanguage : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return "redirect:/showLanguages";
+		}
+
+		@RequestMapping(value = "/getLangInfoByCode", method = RequestMethod.GET)
+		@ResponseBody
+		public Info getLangInfoByCode(HttpServletRequest request, HttpServletResponse response) {
+
+			Info info = new Info();
+			try {
+				String code = request.getParameter("code");
+				int langId = Integer.parseInt(request.getParameter("langId"));
+				
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("code", code);
+				map.add("langId", langId);
+				map.add("compId", userDetail.getUser().getCompanyId());
+
+				Language langRes = Constant.getRestTemplate().postForObject(Constant.url + "getLanguageByCode", map,
+						Language.class);
+				System.out.println("LANGUAGE  ------  " + langRes);
+				if (langRes != null) {
+					info.setError(false);
+					info.setMessage("Language Found");
+				} else {
+					info.setError(true);
+					info.setMessage("Language Not Found");
+				}
+			} catch (Exception e) {
+				System.out.println("Execption in /getLangInfoByCode : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return info;
+		}
+
+		@RequestMapping(value = "/editLang", method = RequestMethod.GET)
+		public ModelAndView editLang(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+				model = new ModelAndView("masters/addLanguage");
+				
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+
+				String base64encodedString = request.getParameter("langId");
+				String langId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("langId", Integer.parseInt(langId));
+				map.add("compId", userDetail.getUser().getCompanyId());
+
+				Language lang = Constant.getRestTemplate().postForObject(Constant.url + "getLanguageById", map,
+						Language.class);
+				model.addObject("lang", lang);
+
+				model.addObject("title", "Edit Language");
+			} catch (Exception e) {
+				System.out.println("Execption in /editLang : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return model;
+		}
+
+		// Author-Mahendra Singh Created On-20-07-2020
+		// Modified By-Mahendra Singh Created On-20-07-2020
+		// Desc- Show City.
+		@RequestMapping(value = "/deleteLang", method = RequestMethod.GET)
+		public String deleteLang(HttpServletRequest request, HttpServletResponse response) {
+
+			HttpSession session = request.getSession();
+			try {
+
+				String base64encodedString = request.getParameter("langId");
+				String langId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("langId", Integer.parseInt(langId));
+
+				Info res = Constant.getRestTemplate().postForObject(Constant.url + "deleteLanguageById", map, Info.class);
+
+				if (!res.getError()) {
+					session.setAttribute("successMsg", res.getMessage());
+				} else {
+					session.setAttribute("errorMsg", res.getMessage());
+				}
+
+			} catch (Exception e) {
+				System.out.println("Execption in /deleteLang : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return "redirect:/showLanguages";
+		}
+
 }
