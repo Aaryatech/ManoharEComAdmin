@@ -41,8 +41,8 @@
 					<ul class="nav nav-group-sub" data-submenu-title="Masters">
 					
 						<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showMnUsers"
-							class="nav-link">User List</a></li>
+							href="${pageContext.request.contextPath}/showUsers"
+							class="nav-link">Users List</a></li>
 
 					</ul></li>
 					

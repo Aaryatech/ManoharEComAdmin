@@ -65,8 +65,8 @@
 								<span class="font-size-sm text-uppercase font-weight-semibold"><h6
 										class="card-title">${title}</h6></span> <span
 									class="font-size-sm text-uppercase font-weight-semibold"><a
-									href="${pageContext.request.contextPath}/showMnUsers"
-									style="color: white;" class="card-title">User List</a></span>
+									href="${pageContext.request.contextPath}/showUsers"
+									style="color: white;" class="card-title">Users List</a></span>
 							</div>
 
 
