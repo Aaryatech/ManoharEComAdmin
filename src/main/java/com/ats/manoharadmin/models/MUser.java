@@ -1,6 +1,6 @@
 package com.ats.manoharadmin.models;
 
-public class MnUser {
+public class MUser {
 	private int userId;
 	private String userName;
 	private String userMobileNo;

@@ -1,15 +1,15 @@
 package com.ats.manoharadmin.models.login;
 
 import com.ats.manoharadmin.models.ErrorMessage;
-import com.ats.manoharadmin.models.MnUser;
+import com.ats.manoharadmin.models.MUser;
 
 public class UserResponse {
-	MnUser user;
+	MUser user;
 	ErrorMessage errorMessage;
-	public MnUser getUser() {
+	public MUser getUser() {
 		return user;
 	}
-	public void setMnUser(MnUser user) {
+	public void setMnUser(MUser user) {
 		this.user = user;
 	}
 	public ErrorMessage getErrorMessage() {

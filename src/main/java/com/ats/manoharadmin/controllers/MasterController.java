@@ -20,7 +20,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.ats.manoharadmin.common.Constant;
 import com.ats.manoharadmin.common.FormValidation;
-import com.ats.manoharadmin.models.MnUser;
+import com.ats.manoharadmin.models.MUser;
 
 
 public class MasterController {
@@ -41,9 +41,9 @@ public class MasterController {
 				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 				map.add("compId", companyId);
 
-				MnUser[] userArr = rest.postForObject(Constant.url + "getAllMnUsers", map,
-						MnUser[].class);
-				List<MnUser> userList = new ArrayList<MnUser>(Arrays.asList(userArr));
+				MUser[] userArr = rest.postForObject(Constant.url + "getAllMnUsers", map,
+						MUser[].class);
+				List<MUser> userList = new ArrayList<MUser>(Arrays.asList(userArr));
 
 				for (int i = 0; i < userList.size(); i++) {
 

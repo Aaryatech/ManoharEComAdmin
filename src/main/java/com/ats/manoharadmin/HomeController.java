@@ -33,7 +33,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.ats.manoharadmin.common.Constant;
 import com.ats.manoharadmin.models.Info;
-import com.ats.manoharadmin.models.MnUser;
+import com.ats.manoharadmin.models.MUser;
 import com.ats.manoharadmin.models.login.UserResponse;
 
 
@@ -201,7 +201,7 @@ public class HomeController {
 		MultiValueMap<String, Object> map = new LinkedMultiValueMap<String, Object>();
 		map.add("mobNo", mobNo);
 		
-		MnUser user = Constant.getRestTemplate().postForObject(Constant.url + "getMnUserDetailByMobNo", map, MnUser.class);
+		MUser user = Constant.getRestTemplate().postForObject(Constant.url + "getMnUserDetailByMobNo", map, MUser.class);
 		System.err.println("User Info-----------"+user);
 		if(user!=null) {
 			model = new ModelAndView("verifyOTP");
@@ -243,7 +243,7 @@ public class HomeController {
 
 			map.add("otp", otp);
 
-			MnUser user = Constant.getRestTemplate().postForObject(Constant.url + "verifyOTP", map, MnUser.class);	
+			MUser user = Constant.getRestTemplate().postForObject(Constant.url + "verifyOTP", map, MUser.class);	
 		//	System.err.println("OTP User--------------"+user);
 
 			if (user.getUserId() == 0) {
