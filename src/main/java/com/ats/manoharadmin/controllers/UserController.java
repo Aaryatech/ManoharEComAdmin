@@ -91,9 +91,14 @@ public class UserController {
 			MUser user = new MUser();
 			try {
 				model = new ModelAndView("masters/addUser");
+				
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
 
-				Designation[] desigArr = Constant.getRestTemplate().getForObject(Constant.url + "getDesignations",
-						Designation[].class);
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("compId", companyId);
+				Designation[] desigArr = Constant.getRestTemplate().postForObject(Constant.url + "getDesignations",
+						map, Designation[].class);
 				List<Designation> desigList = new ArrayList<Designation>(Arrays.asList(desigArr));
 				model.addObject("desigList", desigList);
 
@@ -391,6 +396,7 @@ public class UserController {
 			
 			HttpSession session = request.getSession();
 			UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+			int companyId = (int) session.getAttribute("companyId");
 			
 			try {
 				int langId = Integer.parseInt(request.getParameter("lang_id"));
@@ -400,7 +406,7 @@ public class UserController {
 				lang.setExInt2(0);
 				lang.setExVar1("NA");
 				lang.setExVar2("NA");
-				lang.setCompanyId(1);
+				lang.setCompanyId(companyId);
 				lang.setIsActive(Integer.parseInt(request.getParameter("language")));
 				lang.setLangCode(request.getParameter("language_code").toUpperCase());
 				lang.setLangId(langId);
@@ -723,5 +729,210 @@ public class UserController {
 					}
 					return "redirect:/showUserTypes";
 				}
+		
+	/**************************************************************************************/
+		// Author-Mahendra Singh Created On-28-07-2020
+		// Modified By-Mahendra Singh Created On-28-07-2020
+		// Desc- Show User Type.
+		@RequestMapping(value = "/showDesignations", method = RequestMethod.GET)
+		public ModelAndView showDesignations(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+				model = new ModelAndView("masters/designationList");
+
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+
+						
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("compId", companyId);
 				
+				Designation[] desigArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllDesignations", map,
+						Designation[].class);
+				List<Designation> desigList = new ArrayList<Designation>(Arrays.asList(desigArr));
+
+				for (int i = 0; i < desigList.size(); i++) {
+
+					desigList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(desigList.get(i).getDesignationId())));
+				}
+
+					model.addObject("desigList", desigList);
+
+					model.addObject("title", "Designation List");
+
+				} catch (Exception e) {
+					System.out.println("Execption in /showDesignations : " + e.getMessage());
+					e.printStackTrace();
+				}
+
+				return model;
+			}
+		
+		
+		// Author-Mahendra Singh Created On-29-07-2020
+		// Modified By-Mahendra Singh Created On-29-07-2020
+		// Desc- Add Designation
+		@RequestMapping(value = "/addDesignation", method = RequestMethod.GET)
+		public ModelAndView addDesignation(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			Designation designation = new Designation();
+			try {
+					model = new ModelAndView("masters/addDesignation");
+					model.addObject("designation", designation);
+					model.addObject("title", "Add Designation");
+
+			} catch (Exception e) {
+					System.out.println("Execption in /addDesignation : " + e.getMessage());
+					e.printStackTrace();
+			}
+				return model;
+		}
+		
+		
+		
+		@RequestMapping(value = "/checkUniqueDesignation", method = RequestMethod.GET)
+		@ResponseBody
+		public Info checkUniqueDesignation(HttpServletRequest request, HttpServletResponse response) {
+
+			Info info = new Info();
+			try {
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+				
+				int desigId = 0;
+					try {
+						desigId = Integer.parseInt(request.getParameter("desigId"));
+					}catch (Exception e) {
+						desigId = 0;
+						e.printStackTrace();
+					}
+				String designation = request.getParameter("designation");
+			
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("designation", designation);
+				map.add("desigId", desigId);
+				map.add("compId", companyId);
+
+				Designation res = Constant.getRestTemplate().postForObject(Constant.url + "getDesignationByName", map, Designation.class);
+				System.out.println("desig  ------  " + res);
+				if (res != null) {
+					info.setError(false);
+					info.setMessage("Designation Found");
+				} else {
+					info.setError(true);
+					info.setMessage("Designation Not Found");
+				}
+			} catch (Exception e) {
+				System.out.println("Execption in /checkUniqueDesignation : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return info;
+		}
+		
+		
+		@RequestMapping(value = "/insertNewDesignation", method = RequestMethod.POST)
+		public String inserNewDesignation(HttpServletRequest request, HttpServletResponse response) {
+			
+			try {
+				
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+			
+			
+				Designation designation = new Designation();
+				
+				int desigId = Integer.parseInt(request.getParameter("desig_id"));
+				
+				designation.setDesignationId(desigId);				
+				designation.setDesignation(request.getParameter("designation"));
+				designation.setDelStatus(0);
+				designation.setExInt1(userDetail.getUser().getCompanyId());
+				designation.setExInt2(0);
+				designation.setExVar1("NA");
+				designation.setExVar2("NA");
+				designation.setIsActive(Integer.parseInt(request.getParameter("status")));
+				
+				Designation res = Constant.getRestTemplate().postForObject(Constant.url + "insertDesignation", designation,
+						Designation.class);
+
+				if (res.getDesignationId() > 0) {
+					if (desigId == 0)
+						session.setAttribute("successMsg", "Designation Saved Sucessfully");
+					else
+						session.setAttribute("successMsg", "Designation Update Sucessfully");
+				} else {
+					session.setAttribute("errorMsg", "Failed to Save Designation");
+				}
+			} catch (Exception e) {
+				System.out.println("Execption in /insertNewDesignation : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return "redirect:/showDesignations";
+		}
+		
+		@RequestMapping(value = "/editDesignation", method = RequestMethod.GET)
+		public ModelAndView editDesignation(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+				model = new ModelAndView("masters/addDesignation");
+				
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+
+				String base64encodedString = request.getParameter("desigId");
+				String desigId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("desigId", Integer.parseInt(desigId));
+				map.add("compId", userDetail.getUser().getCompanyId());
+
+				Designation designation = Constant.getRestTemplate().postForObject(Constant.url + "getDesignationById", map,
+						Designation.class);
+				model.addObject("designation", designation);
+
+				model.addObject("title", "Edit Designation");
+			} catch (Exception e) {
+				System.out.println("Execption in /editDesignation : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return model;
+		}
+		
+		
+		// Author-Mahendra Singh Created On-29-07-2020
+		// Modified By-Mahendra Singh Created On-29-07-2020
+		// Desc- Delete Dssignation.
+		@RequestMapping(value = "/deleteDesignation", method = RequestMethod.GET)
+		public String deleteDesignation(HttpServletRequest request, HttpServletResponse response) {
+
+							
+			try {
+						HttpSession session = request.getSession();
+						UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+								
+						String base64encodedString = request.getParameter("desigId");
+						String desigId = FormValidation.DecodeKey(base64encodedString);
+
+						MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+						map.add("desigId", Integer.parseInt(desigId));
+						map.add("compId", userDetail.getUser().getCompanyId());
+
+						Info res = Constant.getRestTemplate().postForObject(Constant.url + "deleteDeignationById", map, Info.class);
+
+						if (!res.getError()) {
+							session.setAttribute("successMsg", res.getMessage());
+						} else {
+							session.setAttribute("errorMsg", res.getMessage());
+						}
+
+				} catch (Exception e) {
+						System.out.println("Execption in /deleteUserType : " + e.getMessage());
+						e.printStackTrace();
+				}
+							return "redirect:/showDesignations";
+		}
 }

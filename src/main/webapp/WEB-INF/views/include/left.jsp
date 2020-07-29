@@ -30,6 +30,10 @@
 					<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showCompanies"
 							class="nav-link">Companies List</a></li>
+							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showDesignations"
+							class="nav-link">Designations List</a></li>
 					
 					<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showUserTypes"
