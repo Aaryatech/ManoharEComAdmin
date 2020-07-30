@@ -313,4 +313,24 @@ public class HomeController {
 
 	}
 	
+	@RequestMapping(value = "/sessionTimeOut", method = RequestMethod.GET)
+	public ModelAndView displayLoginAgain(HttpServletRequest request, HttpServletResponse response) {
+
+		ModelAndView model = new ModelAndView("login");
+		HttpSession session = request.getSession();
+		
+		session.removeAttribute("UserDetail");
+		session.removeAttribute("userId");
+		session.removeAttribute("companyId");
+		
+		session.invalidate();
+
+		logger.info("/login request mapping.");
+
+		model.addObject("loginResponseMessage", "Session timeout ! Please login again . . .");
+
+		return model;
+
+	}
+	
 }

@@ -49,7 +49,16 @@
 
 					</ul></li>
 					
-					<%-- <li class="nav-item nav-item-submenu"><a href="#"
+					<li class="nav-item nav-item-submenu"><a href="#"
+					class="nav-link"><i class="icon-list-unordered"></i><span>Product</span></a>
+					<ul class="nav nav-group-sub" data-submenu-title="Product">
+					
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showCategories"
+							class="nav-link">Category List</a></li>
+					</ul></li>
+					
+				<%-- 	<li class="nav-item nav-item-submenu"><a href="#"
 					class="nav-link"><i class="icon-list-unordered"></i><span>Basic Masters</span></a>
 					<ul class="nav nav-group-sub" data-submenu-title="Basic Masters">
 					
