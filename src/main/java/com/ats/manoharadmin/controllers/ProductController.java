@@ -34,10 +34,13 @@ import com.ats.manoharadmin.common.Constant;
 import com.ats.manoharadmin.common.FormValidation;
 import com.ats.manoharadmin.models.CatImgBean;
 import com.ats.manoharadmin.models.Category;
+import com.ats.manoharadmin.models.Flavour;
 import com.ats.manoharadmin.models.Images;
 import com.ats.manoharadmin.models.Info;
 import com.ats.manoharadmin.models.SubCat;
+import com.ats.manoharadmin.models.Tags;
 import com.ats.manoharadmin.models.UpdateImageSeqNo;
+import com.ats.manoharadmin.models.login.UserResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 @Controller
@@ -769,4 +772,377 @@ public class ProductController {
 		return info;
 	}
 	
+	/*************************************************************************/
+	// Author-Mahendra Singh Created On-30-07-2020
+		// Modified By-Mahendra Singh Created On-30-07-2020
+		// Desc- Show Tag List.
+		@RequestMapping(value = "/showTagList", method = RequestMethod.GET)
+		public ModelAndView showTagList(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			List<Tags> tagList = new ArrayList<Tags>();
+			try {
+				
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+				
+				model = new ModelAndView("product/tagList");
+				model.addObject("title", "Tag List");
+				
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();				
+				map.add("compId", companyId);
+
+				Tags[] tagArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllTags", map, Tags[].class);
+				tagList = new ArrayList<Tags>(Arrays.asList(tagArr));
+
+				for (int i = 0; i < tagList.size(); i++) {
+
+					tagList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(tagList.get(i).getTagId())));
+				}
+				model.addObject("tagList", tagList);
+
+			} catch (Exception e) {
+				System.out.println("Execption in /showTagList : " + e.getMessage());
+				e.printStackTrace();
+			}
+
+			return model;
+		}
+	
+	
+		// Author-Mahendra Singh Created On-30-07-2020
+		// Modified By-Mahendra Singh Created On-30-07-2020
+		// Desc- Add Tag List.
+		@RequestMapping(value = "/addTag", method = RequestMethod.GET)
+		public ModelAndView addNewTag(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = new ModelAndView("product/addTag");
+
+			Tags tag = new Tags();
+
+			model.addObject("tag", tag);
+
+			model.addObject("title", "Add Tag");
+
+			return model;
+		}
+		
+		// Author-Mahendra Singh Created On-30-07-2020
+		// Modified By-Mahendra Singh Created On-30-07-2020
+		// Desc- Insert Tag List.
+		@RequestMapping(value = "/saveTag", method = RequestMethod.POST)
+		public String saveTag(HttpServletRequest request, HttpServletResponse response) {
+			try {
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+
+				Tags tag = new Tags();
+
+				int tagId = Integer.parseInt(request.getParameter("tag_id"));
+				tag.setExInt1(userDetail.getUser().getCompanyId());
+				tag.setExInt2(0);
+				tag.setExVar1("NA");
+				tag.setExVar2("NA");
+				tag.setTagDeleteStatus(0);
+				tag.setTagDesc(request.getParameter("tag_desc"));
+				tag.setTagId(tagId);
+				tag.setTagIsActive(Integer.parseInt(request.getParameter("r_tag")));
+				tag.setTagName(request.getParameter("tag_name"));
+				tag.setTagSortNumber(1);
+
+				Tags tagRes = Constant.getRestTemplate().postForObject(Constant.url + "saveNewTag", tag, Tags.class);
+
+				if (tagRes.getTagId() > 0) {
+					if (tagId == 0)
+						session.setAttribute("successMsg", "Tag Saved Sucessfully");
+					else
+						session.setAttribute("successMsg", "Tag Update Sucessfully");
+				} else {
+					session.setAttribute("errorMsg", "Failed to Save Tag");
+				}
+			} catch (Exception e) {
+				System.out.println("Execption in /saveTag : " + e.getMessage());
+				e.printStackTrace();
+			}
+
+			return "redirect:/showTagList";
+		}
+
+		// Author-Mahendra Singh Created On-30-07-2020
+		// Modified By-Mahendra Singh Created On-30-07-2020
+		// Desc- Edit Tag List.
+		@RequestMapping(value = "/editTag", method = RequestMethod.GET)
+		public ModelAndView editTag(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+				model = new ModelAndView("product/addTag");
+
+				String base64encodedString = request.getParameter("tagId");
+				String tagId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("tagId", Integer.parseInt(tagId));
+
+				Tags tag = Constant.getRestTemplate().postForObject(Constant.url + "getTagById", map, Tags.class);
+				model.addObject("tag", tag);
+
+				model.addObject("title", "Edit Tag");
+			} catch (Exception e) {
+				System.out.println("Execption in /editTag : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return model;
+		}
+
+		// Author-Mahendra Singh Created On-30-07-2020
+		// Modified By-Mahendra Singh Created On-30-07-2020
+		// Desc- Delete Tag.
+		@RequestMapping(value = "/deleteTag", method = RequestMethod.GET)
+		public String deleteTag(HttpServletRequest request, HttpServletResponse response) {
+
+			HttpSession session = request.getSession();
+			try {
+
+				String base64encodedString = request.getParameter("tagId");
+				String tagId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("tagId", Integer.parseInt(tagId));
+				
+				Info info = Constant.getRestTemplate().postForObject(Constant.url + "deleteTagById", map, Info.class);
+				if (!info.getError()) {
+					session.setAttribute("successMsg", info.getMessage());
+				} else {
+					session.setAttribute("errorMsg", info.getMessage());
+				}
+
+//				Info res = Constant.getRestTemplate().postForObject(Constant.url + "isTagAssign", map, Info.class);
+//				if (!res.getError()) {
+//					session.setAttribute("errorMsg", res.getMessage());
+//				} else {
+//					Info info = Constant.getRestTemplate().postForObject(Constant.url + "deleteTagById", map, Info.class);
+//
+//					if (!info.getError()) {
+//						session.setAttribute("successMsg", info.getMessage());
+//					} else {
+//						session.setAttribute("errorMsg", info.getMessage());
+//					}
+//				}
+
+			} catch (Exception e) {
+				System.out.println("Execption in /deleteTag : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return "redirect:/showTagList";
+		}
+		
+		
+		
+		// Author-Mahendra Singh Created On-30-07-2020
+		// Modified By-Mahendra Singh Created On-30-07-2020
+		// Desc- Flavour List.
+		@RequestMapping(value = "/showFlavourList", method = RequestMethod.GET)
+		public ModelAndView showFlavourList(HttpServletRequest request, HttpServletResponse response) {
+			ModelAndView model = new ModelAndView("product/flavourList");
+			try {			
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+				
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();				
+				map.add("compId", companyId);
+
+				Flavour[] flavourArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllFlavours", map, Flavour[].class);
+				List<Flavour> flavourList = new ArrayList<Flavour>(Arrays.asList(flavourArr));
+
+				for (int i = 0; i < flavourList.size(); i++) {
+
+					flavourList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(flavourList.get(i).getFlavourId())));
+				}
+				model.addObject("flavourList", flavourList);
+				model.addObject("title", "Flavour List");
+			}catch (Exception e) {
+				System.out.println("Execption in /showFlavourList : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return model;
+		}
+		
+		
+				// Author-Mahendra Singh Created On-30-07-2020
+				// Modified By-Mahendra Singh Created On-30-07-2020
+				// Desc- Add Flavour.
+				@RequestMapping(value = "/addFlavour", method = RequestMethod.GET)
+				public ModelAndView addFlavour(HttpServletRequest request, HttpServletResponse response) {
+					ModelAndView model = new ModelAndView("product/addFlavour");
+					try {
+			
+						Flavour flavour = new Flavour();
+						
+						model.addObject("flavour", flavour);
+						model.addObject("title", "Add Flavour");
+					}catch (Exception e) {
+						System.out.println("Execption in /addFlavour : " + e.getMessage());
+						e.printStackTrace();
+					}
+					return model;
+				}
+				
+				
+				@RequestMapping(value = "/addNewFlavour", method = RequestMethod.POST)
+				public String insertFlavour(HttpServletRequest request, HttpServletResponse response) {
+					
+					try {
+						HttpSession session = request.getSession();
+						int companyId = (int) session.getAttribute("companyId");
+			
+						Flavour flavour = new Flavour();
+						
+						int flavourId = Integer.parseInt(request.getParameter("flavour_id"));
+						
+						flavour.setCompanyId(companyId);
+						flavour.setDelStatus(0);
+						flavour.setDescription(request.getParameter("description"));
+						flavour.setExInt1(0);
+						flavour.setExInt2(0);
+						flavour.setExVar1("NA");
+						flavour.setExVar2("NA");
+						flavour.setFlavourCode(request.getParameter("flavour_code"));
+						flavour.setFlavourId(flavourId);
+						flavour.setFlavourName(request.getParameter("flavour_name"));
+						flavour.setRate(Float.parseFloat(request.getParameter("rate")));
+						flavour.setSeqNo(Integer.parseInt(request.getParameter("seq_no")));
+						
+						Flavour favRes = Constant.getRestTemplate().postForObject(Constant.url + "insertFlavour", flavour, Flavour.class);
+
+						if (favRes.getFlavourId()> 0) {
+							if (flavourId == 0)
+								session.setAttribute("successMsg", "Flavour Saved Sucessfully");
+							else
+								session.setAttribute("successMsg", "Flavour Update Sucessfully");
+						} else {
+							session.setAttribute("errorMsg", "Failed to Save Flavour");
+						}
+						
+					}catch (Exception e) {
+						System.out.println("Execption in /insertFlavour : " + e.getMessage());
+						e.printStackTrace();
+					}
+					return "redirect:/showFlavourList";
+				}
+				
+				
+				
+				
+				// Author-Mahendra Singh Created On-30-07-2020
+				// Modified By-Mahendra Singh Created On-30-07-2020
+				// Desc- Edit Tag List.
+				@RequestMapping(value = "/editFlavour", method = RequestMethod.GET)
+				public ModelAndView editFlavour(HttpServletRequest request, HttpServletResponse response) {
+
+					ModelAndView model = null;
+					try {
+						model = new ModelAndView("product/addFlavour");
+
+						String base64encodedString = request.getParameter("flavourId");
+						String flavourId = FormValidation.DecodeKey(base64encodedString);
+
+						MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+						map.add("flavourId", Integer.parseInt(flavourId));
+
+						Flavour flavour = Constant.getRestTemplate().postForObject(Constant.url + "getFlavourById", map, Flavour.class);
+						model.addObject("flavour", flavour);
+
+						model.addObject("title", "Edit Tag");
+					} catch (Exception e) {
+						System.out.println("Execption in /editFlavour : " + e.getMessage());
+						e.printStackTrace();
+					}
+					return model;
+				}
+				
+				// Author-Mahendra Singh Created On-30-07-2020
+				// Modified By-Mahendra Singh Created On-30-07-2020
+				// Desc- Delete Flavour.
+				@RequestMapping(value = "/deleteFlavour", method = RequestMethod.GET)
+				public String deleteFlavour(HttpServletRequest request, HttpServletResponse response) {
+
+					HttpSession session = request.getSession();
+					try {
+
+						String base64encodedString = request.getParameter("flavourId");
+						String flavourId = FormValidation.DecodeKey(base64encodedString);
+
+						MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+						map.add("flavourId", Integer.parseInt(flavourId));
+						
+						Info info = Constant.getRestTemplate().postForObject(Constant.url + "deleteFlavourById", map, Info.class);
+						if (!info.getError()) {
+							session.setAttribute("successMsg", info.getMessage());
+						} else {
+							session.setAttribute("errorMsg", info.getMessage());
+						}
+
+					} catch (Exception e) {
+						System.out.println("Execption in /deleteFlavour : " + e.getMessage());
+						e.printStackTrace();
+					}
+					return "redirect:/showFlavourList";
+				}
+				
+				@RequestMapping(value = "/getFlavourCode", method = RequestMethod.GET)
+				@ResponseBody
+				public Info getFlavourCode(HttpServletRequest request, HttpServletResponse response) {
+					Info info = new Info();
+					String catCode = "";
+					try {
+						int flavourId = 0;
+						try {
+							flavourId = Integer.parseInt(request.getParameter("flavour_id"));
+						}catch (Exception e) {
+							e.printStackTrace();
+							flavourId = 0;
+						}
+						
+						String flavourName = request.getParameter("flavourName");
+						
+						
+						System.out.println("Flavour Name: "+flavourName);
+						
+						HttpSession session = request.getSession();
+						int companyId = (int) session.getAttribute("companyId");
+						
+						char ch = flavourName.charAt(0);			
+						System.out.println("Character at 0 index is: "+ch);																		
+						
+						MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+						
+						map.add("flavourName", flavourName);
+						map.add("flavourId", flavourId);
+						map.add("compId", companyId);
+						Category res = Constant.getRestTemplate().postForObject(Constant.url + "getFlavourByName", map, Category.class); 
+						
+						map.add("flavourName", flavourName);
+						map.add("compId", companyId);
+						
+						Integer cat = Constant.getRestTemplate().postForObject(Constant.url + "getFlavourCodeCount", map, Integer.class); 
+				
+						catCode = ch+String.format("%03d", (cat + 1));
+						System.out.println("Cat Code----"+catCode);
+						
+						if(res!=null) {
+							info.setError(true);
+							info.setMessage(catCode);
+						}else {
+							info.setError(false);
+							info.setMessage(catCode);
+						}
+					}catch (Exception e) {
+						e.printStackTrace();
+						
+						info.setError(true);
+						info.setMessage(catCode);			
+					}
+					return info;
+				}
 }

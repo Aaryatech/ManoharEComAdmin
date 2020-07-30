@@ -60,7 +60,14 @@
 					<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showSubCategories"
 							class="nav-link">Sub-Category List</a></li>		
+						
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showTagList"
+							class="nav-link">Tag List</a></li>
 							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showFlavourList"
+							class="nav-link">Flavour List</a></li>
 							
 					</ul></li>
 					
