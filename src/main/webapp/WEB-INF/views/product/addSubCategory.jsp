@@ -12,7 +12,8 @@
 
 <body class="sidebar-xs" onload="getImageData()"><!--  -->
 
-	<c:url var="getCatCode" value="/getCatCode"></c:url>
+	<c:url var="chkUnqSubCat" value="/chkUnqSubCat"></c:url>	
+	<c:url var="chkUnqPrefix" value="/chkUnqPrefix"></c:url>
 	<c:url var="getAllSubCategoryAjax" value="/getAllSubCategoryAjax"></c:url>
 
 	<c:url var="getImagesByDocIdAndDocType"
@@ -57,8 +58,8 @@
 									class="font-size-sm text-uppercase font-weight-semibold card-title">${title}</span>
 								 <span
 									class="font-size-sm text-uppercase font-weight-semibold"><a
-									href="${pageContext.request.contextPath}/showCategories"
-									style="color: white;">Category List</a></span>
+									href="${pageContext.request.contextPath}/showSubCategories"
+									style="color: white;">Sub-Category List</a></span>
 							</div>
 							<br>
 								<div id="fail_div"
@@ -80,59 +81,73 @@
 							<div class="card-body">
 								
 							<form
-									action="${pageContext.request.contextPath}/saveCategoryImages"
+									action="${pageContext.request.contextPath}/saveSubCategoryImages"
 									id="submitForm" method="post" enctype="multipart/form-data">
 
 									<p class="desc text-danger fontsize11">Note : * Fields are
 										mandatory.</p>
 
-							<input type="hidden" value="${catImg.category.catId}" name="cat_id" id="cat_id">
+							<input type="hidden" value="${subCat.subCatId}" name="sub_cat_id" id="sub_cat_id">
 									<div class="form-group row">										
 										<label class="col-form-label font-weight-bold col-lg-2"
-											for="cat_name">Category Name <span
+											for="cat_name">Sub-Category Name <span
 											class="text-danger">* </span>:
 										</label>
 										<div class="col-lg-4">
 											<input type="text" class="form-control maxlength-badge-position" 
-											placeholder="Category"
+											placeholder="Sub-Category"
 											 maxlength="30" autocomplete="off" onchange="trim(this)"
-											value="${catImg.category.catName}" name="cat_name" id="cat_name">
+											value="${subCat.subCatName}" name="sub_cat_name" id="sub_cat_name">
 											<span
-												class="validation-invalid-label" id="error_cat_name"
+												class="validation-invalid-label" id="error_subcat_name"
 												style="display: none;">This field is required.</span>
 												
 											<span
-												class="validation-invalid-label" id="unq_cat_name"
-												style="display: none;">Category Already Exist.</span>
+												class="validation-invalid-label" id="unq_subcat_name"
+												style="display: none;">Sub-Category Already Exist.</span>
 										</div>
 										
 										<label class="col-form-label font-weight-bold col-lg-2"
-											for="address">Category Code<span
-											class="text-danger">*</span>:
+											for="category">Category Name<span
+											class="text-danger">* </span>:
 										</label>
 										<div class="col-lg-4">
-											<input type="text"class="form-control maxlength-badge-position" 
-											placeholder="Enter First Letter Of Category"
-											 maxlength="70" autocomplete="off" onchange="trim(this)" readonly="readonly"
-											 value="${catImg.category.categoryCode}" name="cat_code" id="cat_code">
-											<span
-												class="validation-invalid-label" id="error_cat_code"
+											<select class="form-control select-search" data-fouc name="category" id="category">
+												<option value="">Select Category</option>
+												
+												<c:forEach items="${catList}" var="catList" varStatus="count">	
+													<c:choose>
+													 <c:when test="${catList.catId==subCat.catId}">								
+														<option selected value="${catList.catId}">${catList.catName}</option>																								
+													</c:when>
+													<c:otherwise>
+														<option value="${catList.catId}">${catList.catName}</option>		
+													</c:otherwise>
+													</c:choose>		
+												</c:forEach>
+											</select> 
+																			
+										<span
+												class="validation-invalid-label text-danger" id="error_category"
 												style="display: none;">This field is required.</span>
 										</div>
 									</div>
 									
 									<div class="form-group row">										
 										<label class="col-form-label font-weight-bold col-lg-2"
-											for="description">Description <span
+											for="prefix">Prefix <span
 											class="text-danger"></span>:
 										</label>
 										<div class="col-lg-4">
 											<input type="text" class="form-control maxlength-badge-position" 
 											 maxlength="80" autocomplete="off" onchange="trim(this)"
-											value="${catImg.category.description}" name="description" id="description">
+											 name="prefix" id="prefix" value="${subCat.prefix}">
 											<span
-												class="validation-invalid-label" id="error_company_name"
+												class="validation-invalid-label" id="error_prefix"
 												style="display: none;">This field is required.</span>
+											<span
+												class="validation-invalid-label" id="unq_prefix"
+												style="display: none;">Sub-Category Prefix Already Exist.</span>
 										</div>
 										
 										<label class="col-form-label font-weight-bold col-lg-2"
@@ -142,7 +157,7 @@
 										<div class="col-lg-4">
 											<input type="text"class="form-control maxlength-badge-position" 
 											 maxlength="70" autocomplete="off" onchange="trim(this)"
-											 value="${catImg.category.seqNo}" name="sort_no" id="sort_no">
+											  name="sort_no" id="sort_no" value="${subCat.seqNo}">
 											<span
 												class="validation-invalid-label" id="error_sort_no"
 												style="display: none;">This field is required.</span>
@@ -184,7 +199,7 @@
 
 									<br>
 									
-																	
+																
 										<div class="form-group" id="cat" style="display: none;">
 
 										<label class="col-form-label font-weight-bold col-lg-2"
@@ -244,11 +259,7 @@
 											<button type="button" class="btn btn-primary"
 												onclick="updateSeqNo()">Update Image Sequence</button>
 										</div>
-									</div>									
-									
-									
-									
-									
+									</div>				
 									<div class="form-group row">
 										<label class="col-form-label font-weight-bold col-lg-2"
 											for="cust_name">Image Upload <span
@@ -299,80 +310,72 @@
 
 
 	<script type="text/javascript">
-	$("#cat_name").on('input', function(){    
+	$("#sub_cat_name").on('input', function(){    
 		
-		var catName = $("#cat_name").val();
-		var catId = $("#cat_id").val();
+		var subCatName = $("#sub_cat_name").val();
+		var subCatId = $("#sub_cat_id").val();
 
-		$.getJSON('${getCatCode}', {
-			catName : catName,
-			catId : catId,
+		$.getJSON('${chkUnqSubCat}', {
+			subCatName : subCatName,
+			subCatId : subCatId,
 			ajax : 'true'
 		}, function(data) {			
 			 if(!data.error) {	
-				 $("#unq_cat_name").hide()
-				$("#cat_code").val(data.message);				
-			}else{
-				$("#unq_cat_name").show()
+				 $("#unq_subcat_name").hide()			 
+			}else{			
+				$("#unq_subcat_name").show()
+				$("#sub_cat_name").val('');
 			}
  
 		});
 	});
 	
-	
-	$("#submtbtn_cat").click(function(e) {
+$("#prefix").on('input', function(){    
 		
-	    e.preventDefault();
-	    $.ajax({
-	        type: "POST",
-	        url: "${pageContext.request.contextPath}/saveCategory",
-	        data: { 
-	        	cat_id: $("#cat_id").val(),
-	        	cat_name: $("#cat_name").val(),
-	        	cat_code: $("#cat_code").val(),
-	        	description: $("#description").val(),
-	        	sort_no: $("#sort_no").val() 
-	        },
-	        success: function(result) {
-	        	$("#success_div").show();
-	        	
-	            $("#cat_name").val(''),
-	        	$("#cat_code").val(''),
-	        	$("#description").val(''),
-	        	$("#sort_no").val('')
-	        	
-	        	$("#catId").val(result.catId);
-	        	
-	        },
-	        error: function(result) {
-	        	
-	        	$("#fail_div").show();
-	        }
-	    });
+		var prefix = $("#prefix").val();
+		var subCatId = $("#sub_cat_id").val();
+
+		$.getJSON('${chkUnqPrefix}', {
+			prefix : prefix,
+			subCatId : subCatId,
+			ajax : 'true'
+		}, function(data) {			
+			 if(!data.error) {	
+				 $("#unq_prefix").hide()				
+			}else{
+				$("#unq_prefix").show()
+				$("#prefix").val('');
+			}
+ 
+		});
 	});
 	
-	
-	$(document).ready(function($) {
+	 $(document).ready(function($) {
 
 		$("#submitForm").submit(function(e) {
 			var isError = false;
 			var errMsg = "";
 
-			if (!$("#cat_name").val()) {
+			if (!$("#sub_cat_name").val()) {
 				isError = true;
-				$("#error_cat_name").show()
+				$("#error_subcat_name").show()
 			} else {
-				$("#error_cat_name").hide()
+				$("#error_subcat_name").hide()
 			}
 
+			if (!$("#category").val()) {
+				isError = true;
+				$("#error_category").show()
+			} else {
+				$("#error_category").hide()
+			}	
+			
 			if (!$("#sort_no").val()) {
 				isError = true;
 				$("#error_sort_no").show()
 			} else {
 				$("#error_sort_no").hide()
-			}				
-			
-			
+			}	
 
 			if (!isError) {
 				var x = true;
@@ -385,7 +388,7 @@
 			return false;
 
 		});
-	});
+	}); 
 		/* $("#files")
 				.fileinput(
 						{
@@ -468,7 +471,7 @@
 	<script type="text/javascript">
 		function deleteImage(id, name) {
 
-			//alert(id);
+		//	alert(id);
 
 			$('#loader').show();
 
@@ -483,7 +486,7 @@
 				//alert(JSON.stringify(data));
 
 				if (data.error) {
-					//alert(data.message);
+				//	alert(data.message);
 				} else {
 					getImageData();
 				}
@@ -498,7 +501,7 @@
 		function getImageData() {
 		//alert(1)
 			var type = 0;
-			var selectId = document.getElementById("cat_id").value;
+			var selectId = document.getElementById("sub_cat_id").value;
 
 			if (selectId > 0) {
 
@@ -508,7 +511,7 @@
 						.getJSON(
 								'${getImagesByDocIdAndDocType}',
 								{
-									type : 1,
+									type : 2,
 									selectId : selectId,
 									ajax : 'true'
 
@@ -603,7 +606,7 @@
 
 							});
 
-			alert(JSON.stringify(imgList));
+		//	alert(JSON.stringify(imgList));
 
 			$.getJSON('${updateImageSequenceOrderAjax}', {
 				json : JSON.stringify(imgList),

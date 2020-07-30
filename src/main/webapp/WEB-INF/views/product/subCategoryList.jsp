@@ -35,26 +35,27 @@
 				<!-- Form validation -->
 				<div class="row">
 					<div class="col-md-12">
-
+						<br>
+							<jsp:include page="/WEB-INF/views/include/response_msg.jsp"></jsp:include>
+						<br>
 						<div class="card">
 							<div
 								class="card-header bg-danger text-white d-flex justify-content-between">
 								<span class="font-size-sm text-uppercase font-weight-semibold"><h6
 										class="card-title">${title}</h6></span> <span
 									class="font-size-sm text-uppercase font-weight-semibold"><a
-									href="${pageContext.request.contextPath}/addCategory"
-									style="color: white;" class="card-title">Add Category</a></span>
+									href="${pageContext.request.contextPath}/addSubCategory"
+									style="color: white;" class="card-title">Add Sub-Category</a></span>
 							</div>
-							<br>
-								<jsp:include page="/WEB-INF/views/include/response_msg.jsp"></jsp:include>
-							<br>
 
-						<div class="card-body">
+							<div class="card-body">
+
+
 								<table class="table datatable-header-basic">
 						<thead>
 							<tr>
 								<th width="5%">SR. No.</th>
-								<th>Category Code</th>
+								<th>Sub-Category</th>
 								<th>Category</th>									
 								<th style="display: none;"></th>
 								<th style="display: none;"></th>
@@ -62,16 +63,15 @@
 							</tr>
 						</thead>
 						<tbody>
-							<c:forEach items="${catList}" var="catList" varStatus="count">
+							<c:forEach items="${subCatList}" var="subCatList" varStatus="count">
 								 <tr>
 									<td>${count.index+1}</td>
-									<td>${catList.categoryCode}</td>
-									<td>${catList.catName}</td>
-									<td style="display: none;"></td>
+									<td>${subCatList.subCatName}</td>
+									<td>${subCatList.exVar2}</td>
 									<td style="display: none;"></td>							
 									<td class="text-center">
 										<div class="list-icons">
-											<a href="${pageContext.request.contextPath}/editCategory?catId=${catList.exVar1}"
+											<a href="${pageContext.request.contextPath}/editSubCategory?subCatId=${subCatList.exVar1}"
 												class="list-icons-item" title="Edit"> <i
 												class="icon-database-edit2"></i>
 											</a>
@@ -79,7 +79,7 @@
 										<div class="list-icons">
 										<a href="javascript:void(0)"
 													class="list-icons-item text-danger-600 bootbox_custom"
-													data-uuid="${catList.exVar1}" data-popup="tooltip"
+													data-uuid="${subCatList.exVar1}" data-popup="tooltip"
 													title="" data-original-title="Delete"><i
 													class="icon-trash"></i></a>
 										</div>										
@@ -161,7 +161,7 @@
 									},
 									callback : function(result) {
 										if (result) {
-											location.href = "${pageContext.request.contextPath}/deleteCategory?catId="
+											location.href = "${pageContext.request.contextPath}/deleteSubCategory?subCatId="
 													+ uuid;
 
 										}

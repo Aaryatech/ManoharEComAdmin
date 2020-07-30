@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import com.ats.manoharadmin.models.CatImgBean;
 import com.ats.manoharadmin.models.Category;
 import com.ats.manoharadmin.models.Images;
 import com.ats.manoharadmin.models.Info;
+import com.ats.manoharadmin.models.SubCat;
 import com.ats.manoharadmin.models.UpdateImageSeqNo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -185,8 +187,9 @@ public class ProductController {
 	@RequestMapping(value = "/saveCategoryImages", method = RequestMethod.POST)
 	public String saveCategoryAndSubCategoryImages(HttpServletRequest request, HttpServletResponse response,
 			@RequestParam("files") List<MultipartFile> files) {
+		HttpSession session = request.getSession();
 		try {
-			HttpSession session = request.getSession();
+			
 			int companyId = (int) session.getAttribute("companyId");
 			
 			int catId=0;
@@ -200,7 +203,7 @@ public class ProductController {
 			String catCode = request.getParameter("cat_code");
 			String description = request.getParameter("description");
 			String sortNo = request.getParameter("sort_no");
-			System.out.println("In saveCategory"+" "+catName+" "+catCode+" "+description+" "+sortNo);
+			System.out.println("In saveCategory"+" "+catName+" "+catCode+" "+description+" "+sortNo+" "+catId);
 	
 			
 			
@@ -238,33 +241,47 @@ public class ProductController {
 			System.err.println("selectId - " + selectId);
 
 			List<Images> imageList = new ArrayList<>();
-
 			if (files.size() > 0) {
-
+				try {
 				for (int i = 0; i < files.size(); i++) {
-
+					Random randNum = new Random();
 					String ext = files.get(i).getOriginalFilename().split("\\.")[1];
-					String fileName = Commons.getCurrentTimeStamp() + "." + ext;
+					String fileName = Commons.getCurrentTimeStamp()+"_"+randNum.nextInt(5*1000)+ "." + ext;
 					new ImageUploadController().saveUploadedFiles(files.get(i), 1, fileName);
 
 					Images images = new Images(imageId, type, selectId, fileName, (i + 1), 0, 0, companyId, 0, 0, "", "", "", "", 0,
 							0, 0);
 					imageList.add(images);
 				}
+				}catch (Exception e) {
+					e.printStackTrace();
+				}
 
 				Info info = Constant.getRestTemplate().postForObject(Constant.url + "saveMultipleImage", imageList,
 						Info.class);
 
-				if (info.getError()) {
-					session.setAttribute("errorMsg", info.getMessage());
-				} else {
-					session.setAttribute("successMsg", info.getMessage());
+				int flag = 0;
+				if (info.getError()){	
+					flag = 1;
+				} else {					
+					flag = 0;
+				}
+				
+				if(res.getCatId()>0) {
+					if(catId==0) {
+						session.setAttribute("successMsg", "Category Saved SuccessFully");
+					}else {
+						session.setAttribute("successMsg", "Category Update SuccessFully");
+					}
+				}else {
+					session.setAttribute("errorMsg", "Failed To Save Category");
 				}
 
-			}
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			session.setAttribute("errorMsg", "Failed To Save Category");
 		}
 
 		return "redirect:/showCategories";
@@ -302,12 +319,9 @@ public class ProductController {
 			imageList = new ArrayList<Images>(Arrays.asList(imgArr));
 			catImg.setImgList(imageList);
 			
-			System.err.println("Category Beans=-------"+catImg);
+			//System.err.println("Category Beans=-------"+catImg);
 			model.addObject("catImg", catImg);
-			model.addObject("imgPath", Constant.showDocSaveUrl);
-			
-			
-			model.addObject("isEdit", 1);
+			model.addObject("imgPath", Constant.showDocSaveUrl);			
 		
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -438,4 +452,321 @@ public class ProductController {
 				return "redirect:/showCategories";
 		}
 
+	/**********************************************************************/
+	
+	@RequestMapping(value = "/showSubCategories", method = RequestMethod.GET)
+	public ModelAndView showSubCategories(HttpServletRequest request, HttpServletResponse response) {
+
+		ModelAndView model = null;
+		try {
+
+		model = new ModelAndView("product/subCategoryList");
+
+		HttpSession session = request.getSession();
+		int companyId = (int) session.getAttribute("companyId");
+		
+		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();		
+		map.add("compId", companyId);
+		
+		SubCat[] catArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllSubCategory", map, SubCat[].class);
+		List<SubCat>subCatList = new ArrayList<SubCat>(Arrays.asList(catArr));
+		
+		for (int i = 0; i < subCatList.size(); i++) {
+
+			subCatList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(subCatList.get(i).getSubCatId())));
+		}
+		
+		System.out.println("Sub Cat List----------------"+subCatList);
+		
+		model.addObject("subCatList", subCatList);		
+		
+		model.addObject("title", "Sub-Category List");
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return model;
+	}
+	
+	@RequestMapping(value = "/addSubCategory", method = RequestMethod.GET)
+	public ModelAndView addSubCategory(HttpServletRequest request, HttpServletResponse response) {
+
+		ModelAndView model = null;
+		Category category = new Category();
+		model = new ModelAndView("product/addSubCategory");
+		
+		HttpSession session = request.getSession();
+		int companyId = (int) session.getAttribute("companyId");
+		
+		MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();		
+		map.add("compId", companyId);
+		
+		Category[] catArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllCategory", map, Category[].class);
+		List<Category>	catList = new ArrayList<Category>(Arrays.asList(catArr));
+		
+		model.addObject("catList", catList);
+		
+		model.addObject("title", "Add Sub-Category");
+
+		return model;
+	}
+	
+	@RequestMapping(value = "/saveSubCategoryImages", method = RequestMethod.POST)
+	public String saveSubCategoryImages(HttpServletRequest request, HttpServletResponse response,
+			@RequestParam("files") List<MultipartFile> files) {
+		try {
+			HttpSession session = request.getSession();
+			int companyId = (int) session.getAttribute("companyId");
+			
+			int subCatId=0;
+			try {
+				subCatId= Integer.parseInt(request.getParameter("sub_cat_id"));
+			}catch (Exception e) {
+				e.printStackTrace();
+				subCatId=0;
+			}
+			int catId = Integer.parseInt(request.getParameter("category"));
+			String subCatName = request.getParameter("sub_cat_name");
+			String prefix = request.getParameter("prefix");
+			String description = request.getParameter("description");
+			String sortNo = request.getParameter("sort_no");
+			
+			System.out.println("In saveCategory" +subCatId+" "+subCatName+" "+description+" "+sortNo);	
+			
+			SubCat subCat = new SubCat();
+			
+			subCat.setCatId(catId);
+			subCat.setSubCatId(subCatId);
+			subCat.setSubCatName(subCatName);
+			subCat.setPrefix(prefix);
+			subCat.setCompanyId(companyId);
+			subCat.setDelStatus(0);
+			subCat.setExInt1(0);
+			subCat.setExInt2(0);
+			subCat.setExVar1("NA");
+			subCat.setExVar2("NA");
+			subCat.setSeqNo(Integer.parseInt(sortNo));
+			
+			SubCat res = Constant.getRestTemplate().postForObject(Constant.url + "insertSubCategory", subCat, SubCat.class); 
+			
+			
+			if(res!=null) {
+			
+				System.err.println("saveCategoryImages--- " + files.size());				
+			
+			int type = 2;
+			System.err.println("TYPE - " + type);
+			int selectId = res.getSubCatId();
+			System.err.println("selectId - " + selectId);
+
+			List<Images> imageList = new ArrayList<>();
+
+			if (files.size() > 0) {
+				try {
+					for (int i = 0; i < files.size(); i++) {	
+						Random randNum = new Random();
+							
+						String ext = files.get(i).getOriginalFilename().split("\\.")[1];
+						String fileName = Commons.getCurrentTimeStamp()+"_"+randNum.nextInt(5*1000)+ "." + ext;
+						new ImageUploadController().saveUploadedFiles(files.get(i), 1, fileName);
+	
+						Images images = new Images(0, type, selectId, fileName, (i + 1), 0, 0, companyId, 0, 0, "", "", "", "", 0,
+								0, 0);
+						imageList.add(images);
+					}
+				}catch (Exception e) {
+					e.printStackTrace();
+				}
+				Info info = Constant.getRestTemplate().postForObject(Constant.url + "saveMultipleImage", imageList,
+						Info.class);
+
+				int flag = 0;
+				if (info.getError()){	
+					flag = 1;
+				} else {					
+					flag = 0;
+				}
+				
+				if(res.getCatId()>0) {
+					if(subCatId==0) {
+						session.setAttribute("successMsg", "Sub-Category Saved SuccessFully");
+					}else {
+						session.setAttribute("successMsg", "Sub-Category Update SuccessFully");
+					}
+				}else {
+					session.setAttribute("errorMsg", "Failed To Save Sub-Category");
+				}
+
+			}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return "redirect:/showSubCategories";
+	}
+	
+	
+
+	@RequestMapping(value = "/editSubCategory", method = RequestMethod.GET)
+	public ModelAndView editSubCategory(HttpServletRequest request, HttpServletResponse response) {
+		ModelAndView model = null;
+		try {
+			HttpSession session = request.getSession();
+			int companyId = (int) session.getAttribute("companyId");
+			
+			model = new ModelAndView("product/addSubCategory");
+
+			model.addObject("title", "Edit Category");
+			
+			String base64encodedString = request.getParameter("subCatId");
+			String subcatid = FormValidation.DecodeKey(base64encodedString); 
+			
+			int subCatId = Integer.parseInt(subcatid);
+			System.err.println("catId - " + subCatId);
+	
+			MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+			map.add("subCatId", subCatId);
+			
+			SubCat subCat = Constant.getRestTemplate().postForObject(Constant.url + "getSubCategoryById", map, SubCat.class); 
+			
+			model.addObject("subCat", subCat);		
+			
+			map = new LinkedMultiValueMap<>();		
+			map.add("compId", companyId);
+			Category[] catArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllCategory", map, Category[].class);
+			List<Category>	catList = new ArrayList<Category>(Arrays.asList(catArr));
+			
+			model.addObject("catList", catList);
+			
+			model.addObject("imgPath", Constant.showDocSaveUrl);
+			
+			model.addObject("title", "Edit Sub-Category");
+		
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		return model;
+	}
+	
+	
+	
+	// Author-Mahendra Singh Created On-20-07-2020
+	// Modified By-Mahendra Singh Created On-20-07-2020
+	// Desc- Delete Category.
+	@RequestMapping(value = "/deleteSubCategory", method = RequestMethod.GET)
+		public String deleteSubCategory(HttpServletRequest request, HttpServletResponse response) {
+
+			HttpSession session = request.getSession();
+			try {
+
+				String base64encodedString = request.getParameter("subCatId");
+				String subCatId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("subCatId", Integer.parseInt(subCatId));
+
+				Info res = Constant.getRestTemplate().postForObject(Constant.url + "deleteSubCategoryById", map, Info.class);
+
+					if (!res.getError()) {
+						session.setAttribute("successMsg", res.getMessage());
+					} else {
+							session.setAttribute("errorMsg", res.getMessage());
+					}
+
+				} catch (Exception e) {
+						System.out.println("Execption in /deleteSubCategory : " + e.getMessage());
+						e.printStackTrace();
+				}
+					return "redirect:/showSubCategories";
+			}
+	
+	
+	@RequestMapping(value = "/chkUnqSubCat", method = RequestMethod.GET)
+	@ResponseBody
+	public Info chkUnqSubCat(HttpServletRequest request, HttpServletResponse response) {
+		Info info = new Info();
+		try {
+			int subCatId = 0;
+			try {
+				subCatId = Integer.parseInt(request.getParameter("subCatId"));
+			}catch (Exception e) {
+				e.printStackTrace();
+				subCatId = 0;
+			}
+			
+			String subCatName = request.getParameter("subCatName");			
+			
+			System.out.println("Cat Name: "+subCatName);
+			
+			HttpSession session = request.getSession();
+			int companyId = (int) session.getAttribute("companyId");
+			
+			MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+			
+			map.add("subCatName", subCatName);
+			map.add("subCatId", subCatId);
+			map.add("compId", companyId);
+			SubCat res = Constant.getRestTemplate().postForObject(Constant.url + "getSubCategoryByName", map, SubCat.class); 
+			
+			if(res!=null) {
+				info.setError(true);
+				info.setMessage("Sub-Cat Found");
+			}else {
+				info.setError(false);
+				info.setMessage("Sub-Cat Not Found");
+			}
+			System.out.println("Res--------"+info);
+		}catch (Exception e) {
+			e.printStackTrace();
+			
+			info.setError(true);
+			info.setMessage("Sub-Cat Found");			
+		}
+		return info;
+	}
+	
+	@RequestMapping(value = "/chkUnqPrefix", method = RequestMethod.GET)
+	@ResponseBody
+	public Info chkUnqPrefix(HttpServletRequest request, HttpServletResponse response) {
+		Info info = new Info();
+		try {
+			int subCatId = 0;
+			try {
+				subCatId = Integer.parseInt(request.getParameter("subCatId"));
+			}catch (Exception e) {
+				e.printStackTrace();
+				subCatId = 0;
+			}
+			
+			String prefix = request.getParameter("prefix");			
+			
+			System.out.println("Cat prefix: "+prefix);
+			
+			HttpSession session = request.getSession();
+			int companyId = (int) session.getAttribute("companyId");
+			
+			MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+			
+			map.add("prefix", prefix);
+			map.add("subCatId", subCatId);
+			map.add("compId", companyId);
+			SubCat res = Constant.getRestTemplate().postForObject(Constant.url + "getSubCategoryByPrefix", map, SubCat.class); 
+			
+			if(res!=null) {
+				info.setError(true);
+				info.setMessage("Sub-Cat Found");
+			}else {
+				info.setError(false);
+				info.setMessage("Sub-Cat Not Found");
+			}
+			System.out.println("Res--------"+info);
+		}catch (Exception e) {
+			e.printStackTrace();
+			
+			info.setError(true);
+			info.setMessage("Sub-Cat Found");			
+		}
+		return info;
+	}
+	
 }
