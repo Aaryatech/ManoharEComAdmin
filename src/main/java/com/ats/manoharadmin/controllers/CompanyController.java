@@ -19,6 +19,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
@@ -30,6 +31,7 @@ import com.ats.manoharadmin.common.VpsImageUpload;
 import com.ats.manoharadmin.models.City;
 import com.ats.manoharadmin.models.Company;
 import com.ats.manoharadmin.models.Info;
+import com.ats.manoharadmin.models.login.UserResponse;
 
 @Controller
 @Scope("session")
@@ -242,6 +244,182 @@ public class CompanyController {
 				}
 				return model;
 			}
+			
+			
+			// Author-Mahendra Singh Created On-31-07-2020
+			// Modified By-Mahendra Singh Created On-31-07-2020
+			// Desc- Show Language.
+			@RequestMapping(value = "/showCities", method = RequestMethod.GET)
+			public ModelAndView showCities(HttpServletRequest request, HttpServletResponse response) {
+
+				ModelAndView model = null;
+				try {
+					model = new ModelAndView("masters/cityList");
+
+					City[] cityArr = Constant.getRestTemplate().getForObject(Constant.url + "getAllCities", City[].class);
+					List<City> cityList = new ArrayList<City>(Arrays.asList(cityArr));
+
+					for (int i = 0; i < cityList.size(); i++) {
+
+						cityList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(cityList.get(i).getCityId())));
+					}
+
+					model.addObject("cityList", cityList);
+
+					model.addObject("title", "City List");
+
+				} catch (Exception e) {
+					System.out.println("Execption in /showCities : " + e.getMessage());
+					e.printStackTrace();
+				}
+
+				return model;
+			}
+			
+			// Author-Mahendra Singh Created On-31-07-2020
+			// Modified By-Mahendra Singh Created On-31-07-2020
+			// Desc- Add City
+			@RequestMapping(value = "/addNewCity", method = RequestMethod.GET)
+			public ModelAndView addNewCity(HttpServletRequest request, HttpServletResponse response) {
+
+				ModelAndView model = null;
+				City city = new City();
+				try {
+					model = new ModelAndView("masters/addCity");
+					model.addObject("city", city);
+					model.addObject("title", "Add City");
+
+				} catch (Exception e) {
+					System.out.println("Execption in /addNewCity : " + e.getMessage());
+					e.printStackTrace();
+				}
+				return model;
+			}
+
+			@RequestMapping(value = "/getCityInfoByCode", method = RequestMethod.GET)
+			@ResponseBody
+			public Info getCityInfoByCode(HttpServletRequest request, HttpServletResponse response) {
+
+				Info info = new Info();
+				try {
+					String code = request.getParameter("code");
+					int cityId = Integer.parseInt(request.getParameter("cityId"));
+
+					MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+					map.add("code", code);
+					map.add("cityId", cityId);
+
+					City cityRes = Constant.getRestTemplate().postForObject(Constant.url + "getCityByCode", map, City.class);
+					System.out.println("CITY  ------  " + cityRes);
+					if (cityRes != null) {
+						info.setError(false);
+						info.setMessage("City Found");
+					} else {
+						info.setError(true);
+						info.setMessage("City Not Found");
+					}
+				} catch (Exception e) {
+					System.out.println("Execption in /getCityInfoByCode : " + e.getMessage());
+					e.printStackTrace();
+				}
+				return info;
+			}
+
+			@RequestMapping(value = "/insertCity", method = RequestMethod.POST)
+			public String insertCity(HttpServletRequest request, HttpServletResponse response) {
+
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+
+				City city = new City();
+				int cityId = Integer.parseInt(request.getParameter("city_id"));
+
+				try {
+					city.setCityCode(request.getParameter("city_code").toUpperCase());
+					city.setCityId(cityId);
+					city.setCityName(request.getParameter("city_name"));
+					city.setCompanyId(userDetail.getUser().getCompanyId());
+					city.setDelStatus(0);
+					city.setDescription(request.getParameter("city_decp"));
+					city.setExInt1(0);
+					city.setExInt2(0);
+					city.setExVar1("NA");
+					city.setExVar2("NA");
+					city.setIsActive(Integer.parseInt(request.getParameter("city")));
+
+					City cityRes = Constant.getRestTemplate().postForObject(Constant.url + "addCity", city, City.class);
+
+					if (cityRes.getCityId() > 0) {
+						if (cityId == 0)
+							session.setAttribute("successMsg", "City Saved Sucessfully");
+						else
+							session.setAttribute("successMsg", "City Update Sucessfully");
+					} else {
+						session.setAttribute("errorMsg", "Failed to Save City");
+					}
+				} catch (Exception e) {
+					System.out.println("Execption in /insertCity : " + e.getMessage());
+					e.printStackTrace();
+				}
+
+				return "redirect:/showCities";
+			}
+
+			@RequestMapping(value = "/editCity", method = RequestMethod.GET)
+			public ModelAndView editCity(HttpServletRequest request, HttpServletResponse response) {
+
+				ModelAndView model = null;
+				try {
+					model = new ModelAndView("masters/addCity");
+
+					String base64encodedString = request.getParameter("cityId");
+					String cityId = FormValidation.DecodeKey(base64encodedString);
+
+					MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+					map.add("cityId", Integer.parseInt(cityId));
+
+					City city = Constant.getRestTemplate().postForObject(Constant.url + "getCityById", map, City.class);
+					model.addObject("city", city);
+
+					model.addObject("title", "Edit City");
+				} catch (Exception e) {
+					System.out.println("Execption in /editLang : " + e.getMessage());
+					e.printStackTrace();
+				}
+				return model;
+			}
+
+			// Author-Mahendra Singh Created On-20-07-2020
+			// Modified By-Mahendra Singh Created On-20-07-2020
+			// Desc- Show City.
+			@RequestMapping(value = "/deleteCity", method = RequestMethod.GET)
+			public String deleteCity(HttpServletRequest request, HttpServletResponse response) {
+
+				HttpSession session = request.getSession();
+				try {
+
+					String base64encodedString = request.getParameter("cityId");
+					String cityId = FormValidation.DecodeKey(base64encodedString);
+
+					MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+					map.add("cityId", Integer.parseInt(cityId));
+
+					Info res = Constant.getRestTemplate().postForObject(Constant.url + "deleteCityById", map, Info.class);
+
+					if (!res.getError()) {
+						session.setAttribute("successMsg", res.getMessage());
+					} else {
+						session.setAttribute("errorMsg", res.getMessage());
+					}
+
+				} catch (Exception e) {
+					System.out.println("Execption in /deleteCity : " + e.getMessage());
+					e.printStackTrace();
+				}
+				return "redirect:/showCities";
+			}
+			
+			/**************************************************************************************/
 			
 			
 			

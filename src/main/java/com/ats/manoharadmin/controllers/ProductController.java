@@ -32,6 +32,7 @@ import org.springframework.web.servlet.ModelAndView;
 import com.ats.manoharadmin.common.Commons;
 import com.ats.manoharadmin.common.Constant;
 import com.ats.manoharadmin.common.FormValidation;
+import com.ats.manoharadmin.models.Brands;
 import com.ats.manoharadmin.models.CatImgBean;
 import com.ats.manoharadmin.models.Category;
 import com.ats.manoharadmin.models.Flavour;
@@ -1030,10 +1031,7 @@ public class ProductController {
 					}
 					return "redirect:/showFlavourList";
 				}
-				
-				
-				
-				
+			
 				// Author-Mahendra Singh Created On-30-07-2020
 				// Modified By-Mahendra Singh Created On-30-07-2020
 				// Desc- Edit Tag List.
@@ -1145,4 +1143,245 @@ public class ProductController {
 					}
 					return info;
 				}
+				
+				
+		// Author-Mahendra Singh Created On-31-07-2020
+		// Modified By-Mahendra Singh Created On-31-07-2020
+		// Desc- Show City.
+		@RequestMapping(value = "/showBrandList", method = RequestMethod.GET)
+		public ModelAndView showBrandList(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+
+				model = new ModelAndView("product/brandList");
+
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+					
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();		
+				map.add("compId", companyId);
+					
+				Brands[] brandArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllBrands", map, Brands[].class);
+				List<Brands> brandList = new ArrayList<Brands>(Arrays.asList(brandArr));
+					
+				for (int i = 0; i < brandList.size(); i++) {
+
+					brandList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(brandList.get(i).getBrandId())));
+				}
+					
+				System.out.println(brandList);
+					
+				model.addObject("brandList", brandList);		
+					
+				model.addObject("title", "Brand List");
+				}catch (Exception e) {
+						e.printStackTrace();
+				}
+					return model;
+			}
+		
+		@RequestMapping(value = "/addBrand", method = RequestMethod.GET)
+		public ModelAndView addBrand(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			Brands brand = new Brands();
+			model = new ModelAndView("product/addBrand");
+
+			model.addObject("brand", brand);
+			model.addObject("title", "Add Band");
+
+			return model;
+		}
+		
+		// Author-Mahendra Singh Created On-31-07-2020
+		// Modified By-Mahendra Singh Created On-31-07-2020
+		// Desc- Insert Brand.
+		@RequestMapping(value = "/insertNewBrand", method = RequestMethod.POST)
+		public String insertNewIngredient(HttpServletRequest request, HttpServletResponse response,
+				@RequestParam("doc") MultipartFile doc) {
+			try {
+				Date date = new Date();
+				SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				String brandImage = null;
+
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+
+				if (!doc.getOriginalFilename().equalsIgnoreCase("")) {
+
+					System.err.println("In If ");
+
+					//brandImage = sf.format(date) + "_" + doc.getOriginalFilename();
+					Random randNum = new Random();
+					
+					String ext = doc.getOriginalFilename().split("\\.")[1];
+					brandImage = Commons.getCurrentTimeStamp()+"_"+randNum.nextInt(5*1000)+ "." + ext;
+
+					try {
+						new ImageUploadController().saveUploadedFiles(doc, 1, brandImage);
+					} catch (Exception e) {
+					}
+
+				} else {
+					System.err.println("In else ");
+					brandImage = request.getParameter("editImg");
+
+				}
+
+				Brands brand = new Brands();
+
+				int brandId = Integer.parseInt(request.getParameter("brandId"));
+				
+				brand.setBrandCode(request.getParameter("brandCode"));
+				brand.setBrandId(brandId);
+				brand.setBrandImg(brandImage);
+				brand.setBrandName(request.getParameter("brandName"));
+				brand.setCompanyId(userDetail.getUser().getCompanyId());
+				brand.setDescription(request.getParameter("description"));
+				brand.setSeqNo(Integer.parseInt(request.getParameter("seqNo")));
+				
+				brand.setDelStatus(0);				
+				brand.setExInt1(0);
+				brand.setExInt2(0);
+				brand.setExVar1("NA");
+				brand.setExVar2("NA");
+
+				Brands res = Constant.getRestTemplate().postForObject(Constant.url + "insertBrand", brand,
+						Brands.class);
+
+				if (res.getBrandId() > 0) {
+					if (brandId == 0)
+						session.setAttribute("successMsg", "Brand Saved Sucessfully");
+					else
+						session.setAttribute("successMsg", "Brand Update Sucessfully");
+				} else {
+					session.setAttribute("errorMsg", "Failed to Save Brand");
+				}
+			} catch (Exception e) {
+				System.out.println("Execption in /insertNewBrand : " + e.getMessage());
+				e.printStackTrace();
+			}
+
+			return "redirect:/showBrandList";
+
+		}
+		
+		// Author-Mahendra Singh Created On-31-07-2020
+		// Modified By-Mahendra Singh Created On-31-07-2020
+		// Desc- Edit Brand List.
+		@RequestMapping(value = "/editBrand", method = RequestMethod.GET)
+		public ModelAndView editBrand(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+				model = new ModelAndView("product/addBrand");
+				
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+
+				String base64encodedString = request.getParameter("brandId");
+				String brandId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("brandId", Integer.parseInt(brandId));
+				map.add("compId", companyId);
+
+				Brands brand = Constant.getRestTemplate().postForObject(Constant.url + "getBrandById", map, Brands.class);
+				model.addObject("brand", brand);
+
+				model.addObject("title", "Edit Brand");
+			} catch (Exception e) {
+				System.out.println("Execption in /editBrand : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return model;
+		}
+		
+		// Author-Mahendra Singh Created On-30-07-2020
+		// Modified By-Mahendra Singh Created On-30-07-2020
+		// Desc- Delete Brand.
+		@RequestMapping(value = "/deleteBrand", method = RequestMethod.GET)
+		public String deleteBrand(HttpServletRequest request, HttpServletResponse response) {
+
+			HttpSession session = request.getSession();
+			try {
+
+				String base64encodedString = request.getParameter("brandId");
+				String brandId = FormValidation.DecodeKey(base64encodedString);
+
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("brandId", Integer.parseInt(brandId));
+				
+				Info info = Constant.getRestTemplate().postForObject(Constant.url + "deleteBrand", map, Info.class);
+				if (!info.getError()) {
+					session.setAttribute("successMsg", info.getMessage());
+				} else {
+					session.setAttribute("errorMsg", info.getMessage());
+				}
+
+			} catch (Exception e) {
+				System.out.println("Execption in /deleteBrand : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return "redirect:/showBrandList";
+		}
+		
+		
+		@RequestMapping(value = "/getBrandCode", method = RequestMethod.GET)
+		@ResponseBody
+		public Info getBrandCode(HttpServletRequest request, HttpServletResponse response) {
+			Info info = new Info();
+			String catCode = "";
+			try {
+				int brandId = 0;
+				try {
+					brandId = Integer.parseInt(request.getParameter("brandId"));
+				}catch (Exception e) {
+					e.printStackTrace();
+					brandId = 0;
+				}
+				
+				String brandName = request.getParameter("brandName");
+				
+				
+				System.out.println("brand Name: "+brandName);
+				
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+				
+				char ch = brandName.charAt(0);			
+				System.out.println("Character at 0 index is: "+ch);																		
+				
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				
+				map.add("brandName", brandName);
+				map.add("brandId", brandId);
+				map.add("compId", companyId);
+				Brands res = Constant.getRestTemplate().postForObject(Constant.url + "getBrandByName", map, Brands.class); 
+				
+				map.add("brandName", brandName);
+				map.add("compId", companyId);
+				
+				Integer cat = Constant.getRestTemplate().postForObject(Constant.url + "getBrandCodeCount", map, Integer.class); 
+		
+				catCode = ch+String.format("%03d", (cat + 1));
+				System.out.println("Cat Code----"+catCode);
+				
+				if(res!=null) {
+					info.setError(true);
+					info.setMessage(catCode);
+				}else {
+					info.setError(false);
+					info.setMessage(catCode);
+				}
+			}catch (Exception e) {
+				e.printStackTrace();
+				
+				info.setError(true);
+				info.setMessage(catCode);			
+			}
+			return info;
+		}
+		
 }

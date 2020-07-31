@@ -39,15 +39,20 @@
 							href="${pageContext.request.contextPath}/showUserTypes"
 							class="nav-link">Users Type List</a></li>
 					
-						<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showUsers"
-							class="nav-link">Users List</a></li>
+					<li class="nav-item"><a
+						href="${pageContext.request.contextPath}/showUsers"
+						class="nav-link">Users List</a></li>
 							
-							<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showLanguages"
-							class="nav-link">Languages List</a></li>
-
+					<li class="nav-item"><a
+						href="${pageContext.request.contextPath}/showLanguages"
+						class="nav-link">Languages List</a></li>
+							
+					<li class="nav-item"><a
+						href="${pageContext.request.contextPath}/showCities"
+						class="nav-link">City List</a></li>
+							
 					</ul></li>
+
 					
 					<li class="nav-item nav-item-submenu"><a href="#"
 					class="nav-link"><i class="icon-list-unordered"></i><span>Product</span></a>
@@ -68,6 +73,12 @@
 					<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showFlavourList"
 							class="nav-link">Flavour List</a></li>
+							
+					
+					
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showBrandList"
+							class="nav-link">Brand List</a></li>
 							
 					</ul></li>
 					
