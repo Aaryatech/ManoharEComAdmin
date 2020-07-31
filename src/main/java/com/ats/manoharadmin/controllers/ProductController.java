@@ -38,8 +38,10 @@ import com.ats.manoharadmin.models.Category;
 import com.ats.manoharadmin.models.Flavour;
 import com.ats.manoharadmin.models.Images;
 import com.ats.manoharadmin.models.Info;
+import com.ats.manoharadmin.models.ProductStatus;
 import com.ats.manoharadmin.models.SubCat;
 import com.ats.manoharadmin.models.Tags;
+import com.ats.manoharadmin.models.TaxInfo;
 import com.ats.manoharadmin.models.UpdateImageSeqNo;
 import com.ats.manoharadmin.models.login.UserResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -1383,5 +1385,366 @@ public class ProductController {
 			}
 			return info;
 		}
+		/*******************************************************************************/
 		
+		// Author-Mahendra Singh Created On-31-07-2020
+		// Modified By-Mahendra Singh Created On-31-07-2020
+		// Desc- Show City.
+		@RequestMapping(value = "/showTaxList", method = RequestMethod.GET)
+		public ModelAndView showTaxList(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+
+				model = new ModelAndView("product/taxList");
+
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+					
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();		
+				map.add("compId", companyId);
+					
+				TaxInfo[] taxArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllTaxes", map, TaxInfo[].class);
+				List<TaxInfo> taxList = new ArrayList<TaxInfo>(Arrays.asList(taxArr));
+					
+				for (int i = 0; i < taxList.size(); i++) {
+
+					taxList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(taxList.get(i).getTaxInfoId())));
+				}
+					
+				System.out.println(taxList);
+					
+				model.addObject("taxList", taxList);		
+					
+				model.addObject("title", "Tax List");
+				}catch (Exception e) {
+						e.printStackTrace();
+				}
+					return model;
+			}
+		
+		@RequestMapping(value = "/addTax", method = RequestMethod.GET)
+		public ModelAndView addTax(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			TaxInfo tax = new TaxInfo();
+			model = new ModelAndView("product/addTax");
+
+			model.addObject("tax", tax);
+			model.addObject("title", "Add Tax");
+
+			return model;
+		}
+		
+		// Author-Mahendra Singh Created On-31-07-2020
+		// Modified By-Mahendra Singh Created On-31-07-2020
+		// Desc- Insert Brand.
+		@RequestMapping(value = "/insertNewTax", method = RequestMethod.POST)
+		public String insertNewTax(HttpServletRequest request, HttpServletResponse response) {
+		try {
+				
+						HttpSession session = request.getSession();
+						UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+					
+
+						TaxInfo tax = new TaxInfo();
+
+						int taxId = Integer.parseInt(request.getParameter("taxId"));						
+						
+						tax.setHsn(request.getParameter("hsn"));
+						tax.setIgstPer(Float.parseFloat(request.getParameter("igstPer")));
+						tax.setSgstPer(Float.parseFloat(request.getParameter("sgstPer")));
+						tax.setCgstPer(Float.parseFloat(request.getParameter("cgstPer")));
+						tax.setTaxInfoId(taxId);
+						tax.setTaxTitle(request.getParameter("taxTitle"));
+						tax.setCompanyId(userDetail.getUser().getCompanyId());
+						
+						tax.setDelStatus(0);				
+						tax.setExInt1(0);
+						tax.setExInt2(0);
+						tax.setExVar1("NA");
+						tax.setExVar2("NA");
+
+						TaxInfo res = Constant.getRestTemplate().postForObject(Constant.url + "insertTaxInfo", tax,
+								TaxInfo.class);
+
+						if (res.getTaxInfoId() > 0) {
+							if (taxId == 0)
+								session.setAttribute("successMsg", "Tax Saved Sucessfully");
+							else
+								session.setAttribute("successMsg", "Tax Update Sucessfully");
+						} else {
+							session.setAttribute("errorMsg", "Failed to Save Tax");
+						}
+					} catch (Exception e) {
+						System.out.println("Execption in /insertNewTax : " + e.getMessage());
+						e.printStackTrace();
+					}
+
+					return "redirect:/showTaxList";
+
+				}
+		// Author-Mahendra Singh Created On-31-07-2020
+		// Modified By-Mahendra Singh Created On-31-07-2020
+		// Desc- Edit Tax.
+		@RequestMapping(value = "/editTax", method = RequestMethod.GET)
+			public ModelAndView editTax(HttpServletRequest request, HttpServletResponse response) {
+
+				ModelAndView model = null;
+				try {
+						model = new ModelAndView("product/addTax");
+						
+						HttpSession session = request.getSession();
+						int companyId = (int) session.getAttribute("companyId");
+
+						String base64encodedString = request.getParameter("taxId");
+						String taxId = FormValidation.DecodeKey(base64encodedString);
+
+						MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+						map.add("taxId", Integer.parseInt(taxId));
+						map.add("compId", companyId);
+
+						TaxInfo tax = Constant.getRestTemplate().postForObject(Constant.url + "getTaxById", map, TaxInfo.class);
+						model.addObject("tax", tax);
+
+						model.addObject("title", "Edit Tax");
+					} catch (Exception e) {
+						System.out.println("Execption in /editTax : " + e.getMessage());
+						e.printStackTrace();
+					}
+					return model;
+				}
+		
+		// Author-Mahendra Singh Created On-31-07-2020
+		// Modified By-Mahendra Singh Created On-31-07-2020
+		// Desc- Delete Brand.
+			@RequestMapping(value = "/deleteTax", method = RequestMethod.GET)
+			public String deleteTax(HttpServletRequest request, HttpServletResponse response) {
+
+				HttpSession session = request.getSession();
+				try {
+
+					String base64encodedString = request.getParameter("taxId");
+					String taxId = FormValidation.DecodeKey(base64encodedString);
+					
+					MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+					map.add("taxId", Integer.parseInt(taxId));
+						
+					Info info = Constant.getRestTemplate().postForObject(Constant.url + "/deleteTax", map, Info.class);
+						if (!info.getError()) {
+							session.setAttribute("successMsg", info.getMessage());
+						} else {
+							session.setAttribute("errorMsg", info.getMessage());
+						}
+
+					} catch (Exception e) {
+						System.out.println("Execption in /deleteTax : " + e.getMessage());
+						e.printStackTrace();
+					}
+					return "redirect:/showTaxList";
+				}
+			
+			@RequestMapping(value = "chkUnqTaxTitle", method = RequestMethod.GET)
+			@ResponseBody
+			public Info chkUnqTaxTitle(HttpServletRequest request, HttpServletResponse response) {
+				Info info = new Info();
+				
+				try {
+					int taxId = 0;
+					try {
+						taxId = Integer.parseInt(request.getParameter("taxId"));
+					}catch (Exception e) {
+						e.printStackTrace();
+						taxId = 0;
+					}
+					
+					String taxTitle = request.getParameter("taxTitle");
+					
+					
+					System.out.println("Tax Name: "+taxTitle);
+					
+					HttpSession session = request.getSession();
+					int companyId = (int) session.getAttribute("companyId");
+					
+					MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+					
+					map.add("taxTitle", taxTitle);
+					map.add("taxId", taxId);
+					map.add("compId", companyId);
+					TaxInfo res = Constant.getRestTemplate().postForObject(Constant.url + "getTaxByTaxName", map, TaxInfo.class); 	
+					
+					if(res!=null) {
+						info.setError(true);
+						info.setMessage("Tax Found");
+					}else {
+						info.setError(false);
+						info.setMessage("Tax Not Found");
+					}
+				}catch (Exception e) {
+					e.printStackTrace();
+					
+					info.setError(true);
+					info.setMessage("Tax Found");			
+				}
+				return info;
+			}
+			
+			/**********************************************************************/
+			// Author-Mahendra Singh Created On-31-07-2020
+			// Modified By-Mahendra Singh Created On-31-07-2020
+			// Desc- Show Product Status.
+			@RequestMapping(value = "/showProductStatusList", method = RequestMethod.GET)
+			public ModelAndView showProductStatusList(HttpServletRequest request, HttpServletResponse response) {
+
+				ModelAndView model = null;
+				try {
+
+					model = new ModelAndView("product/productStatusList");
+
+					HttpSession session = request.getSession();
+					int companyId = (int) session.getAttribute("companyId");
+						
+					MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();		
+					map.add("compId", companyId);
+						
+					ProductStatus[] prodctArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllProductStatus", map, ProductStatus[].class);
+					List<ProductStatus> prdctList = new ArrayList<ProductStatus>(Arrays.asList(prodctArr));
+						
+					for (int i = 0; i < prdctList.size(); i++) {
+
+						prdctList.get(i).setExVar1(FormValidation.Encrypt(String.valueOf(prdctList.get(i).getProductStatusId())));
+					}
+						
+					System.out.println(prdctList);
+						
+					model.addObject("prdctList", prdctList);		
+						
+					model.addObject("title", "Product Status List");
+					}catch (Exception e) {
+							e.printStackTrace();
+					}
+						return model;
+				}
+			
+			@RequestMapping(value = "/addProductStatus", method = RequestMethod.GET)
+			public ModelAndView addProductStatus(HttpServletRequest request, HttpServletResponse response) {
+
+				ModelAndView model = null;
+				ProductStatus product = new ProductStatus();
+				model = new ModelAndView("product/addProductStatus");
+
+				model.addObject("product", product);
+				model.addObject("title", "Add Product Status");
+
+				return model;
+			}
+			
+			// Author-Mahendra Singh Created On-31-07-2020
+			// Modified By-Mahendra Singh Created On-31-07-2020
+			// Desc- Insert Product Status.
+			@RequestMapping(value = "/insertNewProductStatus", method = RequestMethod.POST)
+			public String insertNewProductStatus(HttpServletRequest request, HttpServletResponse response) {
+			try {					
+					HttpSession session = request.getSession();
+					UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");						
+
+					ProductStatus product = new ProductStatus();
+
+					int prdctStatId = Integer.parseInt(request.getParameter("productStat_id"));						
+							
+					product.setProductStatus(request.getParameter("prdct_stat"));
+					product.setProductStatusId(prdctStatId);
+					product.setCompanyId(userDetail.getUser().getCompanyId());
+					product.setDescription(request.getParameter("description"));
+							
+					product.setDelStatus(0);				
+					product.setExInt1(0);
+					product.setExInt2(0);
+					product.setExInt3(0);
+					product.setExVar1("NA");
+					product.setExVar2("NA");
+					product.setExVar3("NA");
+
+					ProductStatus res = Constant.getRestTemplate().postForObject(Constant.url + "insertProductStatus", product,
+							ProductStatus.class);
+
+					if (res.getProductStatusId() > 0) {
+							if (prdctStatId == 0)
+								session.setAttribute("successMsg", "Product Status Saved Sucessfully");
+							else
+								session.setAttribute("successMsg", "Product Status Update Sucessfully");
+						} else {
+							session.setAttribute("errorMsg", "Failed to Save Product Status");
+						}
+					} catch (Exception e) {
+							System.out.println("Execption in /insertNewProductStatus : " + e.getMessage());
+							e.printStackTrace();
+					}
+
+					return "redirect:/showProductStatusList";
+
+				}
+			
+			// Author-Mahendra Singh Created On-31-07-2020
+			// Modified By-Mahendra Singh Created On-31-07-2020
+			// Desc- Edit Product Status.
+			@RequestMapping(value = "/editProductStatus", method = RequestMethod.GET)
+				public ModelAndView editProductStatus(HttpServletRequest request, HttpServletResponse response) {
+
+					ModelAndView model = null;
+					try {
+							model = new ModelAndView("product/addProductStatus");
+							
+							HttpSession session = request.getSession();
+							int companyId = (int) session.getAttribute("companyId");
+
+							String base64encodedString = request.getParameter("productId");
+							String productId = FormValidation.DecodeKey(base64encodedString);
+
+							MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+							map.add("productId", Integer.parseInt(productId));
+							map.add("compId", companyId);
+
+							ProductStatus product = Constant.getRestTemplate().postForObject(Constant.url + "getProductStatusById", map, ProductStatus.class);
+							model.addObject("product", product);
+
+							model.addObject("title", "Edit Product Status");
+						} catch (Exception e) {
+							System.out.println("Execption in /editProductStatus : " + e.getMessage());
+							e.printStackTrace();
+						}
+						return model;
+					}
+			
+			// Author-Mahendra Singh Created On-31-07-2020
+			// Modified By-Mahendra Singh Created On-31-07-2020
+			// Desc- Delete ProductStatus.
+				@RequestMapping(value = "/deleteProductStatus", method = RequestMethod.GET)
+				public String deleteProductStatus(HttpServletRequest request, HttpServletResponse response) {
+
+					HttpSession session = request.getSession();
+					try {
+
+						String base64encodedString = request.getParameter("productId");
+						String productId = FormValidation.DecodeKey(base64encodedString);
+						
+						MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+						map.add("productId", Integer.parseInt(productId));
+							
+						Info info = Constant.getRestTemplate().postForObject(Constant.url + "/deleteProductStatus", map, Info.class);
+							if (!info.getError()) {
+								session.setAttribute("successMsg", info.getMessage());
+							} else {
+								session.setAttribute("errorMsg", info.getMessage());
+							}
+
+						} catch (Exception e) {
+							System.out.println("Execption in /deleteProductStatus : " + e.getMessage());
+							e.printStackTrace();
+						}
+						return "redirect:/showProductStatusList";
+					}
+				
+			
+				
 }
