@@ -4,9 +4,6 @@
 
 <div class="sidebar sidebar-light sidebar-main sidebar-expand-md">
 
-
-
-
 	<!-- Sidebar content -->
 	<div class="sidebar-content">
 
@@ -72,18 +69,31 @@
 							
 					<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showFlavourList"
-							class="nav-link">Flavour List</a></li>
-							
+							class="nav-link">Flavour List</a></li>							
 					
 					
 					<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showBrandList"
 							class="nav-link">Brand List</a></li>
 							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showTaxList"
+							class="nav-link">Tax List</a></li>
+							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showProductStatusList"
+							class="nav-link">Product Status List</a></li>
+							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/addItemSKUConfig"
+							class="nav-link">Add Item SKU Configuration</a></li>
+							
+						<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showDeliveryInstructn"
+							class="nav-link">Delivery Instruction List
+						</a></li>
+							
 					</ul></li>
-					
-					
-					
 					
 					
 				<%-- 	<li class="nav-item nav-item-submenu"><a href="#"

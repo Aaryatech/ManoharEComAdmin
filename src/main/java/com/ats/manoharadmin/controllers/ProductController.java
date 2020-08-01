@@ -39,6 +39,7 @@ import com.ats.manoharadmin.models.Flavour;
 import com.ats.manoharadmin.models.Images;
 import com.ats.manoharadmin.models.Info;
 import com.ats.manoharadmin.models.ProductStatus;
+import com.ats.manoharadmin.models.RawMaterialUom;
 import com.ats.manoharadmin.models.SubCat;
 import com.ats.manoharadmin.models.Tags;
 import com.ats.manoharadmin.models.TaxInfo;
@@ -1745,6 +1746,102 @@ public class ProductController {
 						return "redirect:/showProductStatusList";
 					}
 				
+		/**************************************************************************/
+		@RequestMapping(value = "/addItemSKUConfig", method = RequestMethod.GET)
+		public ModelAndView addItemSKUConfig(HttpServletRequest request, HttpServletResponse response) {
+
+			ModelAndView model = null;
+			try {
+					
+					model = new ModelAndView("product/addItemSKUConfig");
+	
+				//	ProductStatus product = new ProductStatus();
+				//	model.addObject("product", product);
+					
+					
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");
+					
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();		
+				map.add("compId", companyId);
+					
+				Category[] catArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllCategory", map, Category[].class);
+				List<Category>	catList = new ArrayList<Category>(Arrays.asList(catArr));
+				model.addObject("catList", catList);
+					
+							
+				SubCat[] subCatArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllSubCategory", map, SubCat[].class);
+				List<SubCat> subCatList = new ArrayList<SubCat>(Arrays.asList(subCatArr));				
+				model.addObject("subCatList", subCatList);
+					
+				
+				Tags[] tagArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllTags", map, Tags[].class);
+				List<Tags> tagList = new ArrayList<Tags>(Arrays.asList(tagArr));					
+				model.addObject("tagList", tagList);
+				
+				
+				Flavour[] flavourArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllFlavours", map, Flavour[].class);
+				List<Flavour> flavourList = new ArrayList<Flavour>(Arrays.asList(flavourArr));				
+				model.addObject("flavourList", flavourList);
+				
+								
+				Brands[] brandArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllBrands", map, Brands[].class);
+				List<Brands> brandList = new ArrayList<Brands>(Arrays.asList(brandArr));					
+				model.addObject("brandList", brandList);
+				
+						
+				TaxInfo[] taxArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllTaxes", map, TaxInfo[].class);
+				List<TaxInfo> taxList = new ArrayList<TaxInfo>(Arrays.asList(taxArr));				
+				model.addObject("taxList", taxList);
+				
 			
+				
+				ProductStatus[] prodctArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllProductStatus", map, ProductStatus[].class);
+				List<ProductStatus> prdctList = new ArrayList<ProductStatus>(Arrays.asList(prodctArr));					
+				model.addObject("prdctList", prdctList);
+				
+				RawMaterialUom[] uomArr = Constant.getRestTemplate().getForObject(Constant.url + "getRmUom", RawMaterialUom[].class);
+				List<RawMaterialUom> uomList = new ArrayList<RawMaterialUom>(Arrays.asList(uomArr));					
+				model.addObject("uomList", uomList);
+					
+					
+					model.addObject("title", "Add Item SKU Configuration");
+				}catch (Exception e) {
+					System.out.println("Execption in /addItemSKUConfig : " + e.getMessage());
+					e.printStackTrace();
+				}
+				return model;
+			}
+		
+		
+		
+		@RequestMapping(value = "/getSubCatByCatId", method = RequestMethod.GET)
+		@ResponseBody
+		public List<SubCat> getSubCatByCatId(HttpServletRequest request, HttpServletResponse response) {
+			
+			List<SubCat> subCatList = new ArrayList<SubCat>();
+			try {
+				HttpSession session = request.getSession();
+				UserResponse userDetail = (UserResponse) session.getAttribute("UserDetail");
+				
+				int catId = Integer.parseInt(request.getParameter("category"));
+				System.out.println("Cat Id-------------"+catId);
+				
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				map.add("compId", userDetail.getUser().getCompanyId());
+				map.add("catId", catId);
+
+				SubCat[] subCatArr = Constant.getRestTemplate().postForObject(Constant.url + "getSubCatByCatIdAndCompId", map,
+						SubCat[].class);
+				subCatList = new ArrayList<SubCat>(Arrays.asList(subCatArr));
+				
+				
+			}catch (Exception e) {
+				System.out.println("Execption in /getSubCatByCatId : " + e.getMessage());
+				e.printStackTrace();
+			}
+			return subCatList;
+			
+		}
 				
 }
