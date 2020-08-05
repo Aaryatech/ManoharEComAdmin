@@ -68,6 +68,8 @@ public class Constant {
 	public static final String UPLOAD_URL = "/home/maddy/ats-12/";
 	public static final String showDocSaveUrl = "http://localhost:8081/madhvickadmin/home/maddy/ats-12/";
 
+	public static final String IMAGE_URL = "http://localhost:8081/madhvickadmin/home/maddy/ats-12/";;
+
 	
 	
 	public static String[] imageAndDocFileExtension = { "txt", "doc", "docx", "pdf", "xls", "xlsx","jpg", "jpeg", "gif", "png" }; 

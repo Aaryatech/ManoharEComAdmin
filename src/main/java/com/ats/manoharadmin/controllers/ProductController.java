@@ -2,6 +2,7 @@ package com.ats.manoharadmin.controllers;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -16,11 +17,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,10 +40,17 @@ import com.ats.manoharadmin.models.Brands;
 import com.ats.manoharadmin.models.CatImgBean;
 import com.ats.manoharadmin.models.Category;
 import com.ats.manoharadmin.models.Flavour;
+import com.ats.manoharadmin.models.GetItemDetails;
 import com.ats.manoharadmin.models.Images;
 import com.ats.manoharadmin.models.Info;
+import com.ats.manoharadmin.models.Item;
+import com.ats.manoharadmin.models.ItemRateIdBean;
 import com.ats.manoharadmin.models.ProductStatus;
+import com.ats.manoharadmin.models.RateType;
 import com.ats.manoharadmin.models.RawMaterialUom;
+import com.ats.manoharadmin.models.SkuConfigDetail;
+import com.ats.manoharadmin.models.SkuConfiguration;
+import com.ats.manoharadmin.models.SkuItemDtl;
 import com.ats.manoharadmin.models.SubCat;
 import com.ats.manoharadmin.models.Tags;
 import com.ats.manoharadmin.models.TaxInfo;
@@ -1747,16 +1758,45 @@ public class ProductController {
 					}
 				
 		/**************************************************************************/
-		@RequestMapping(value = "/addItemSKUConfig", method = RequestMethod.GET)
-		public ModelAndView addItemSKUConfig(HttpServletRequest request, HttpServletResponse response) {
+				@RequestMapping(value = "/showItemList", method = RequestMethod.GET)
+				public ModelAndView showItemList(HttpServletRequest request, HttpServletResponse response) {
+					ModelAndView model = null;
+					try {
+						model = new ModelAndView("product/itemList");
+						
+						HttpSession session = request.getSession();
+						int companyId = (int) session.getAttribute("companyId");
+							
+						MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();		
+						map.add("compId", companyId);
+						
+						GetItemDetails[]  itemArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllItemsDetails", map, GetItemDetails[].class);
+						List<GetItemDetails> itemList = new ArrayList<GetItemDetails>(Arrays.asList(itemArr));	
+			
+						model.addObject("itemList", itemList);
+						
+						model.addObject("title", "Items List");
+					}catch (Exception e) {
+						System.out.println("Execption in /showItemList : " + e.getMessage());
+						e.printStackTrace();
+					}
+					
+					return model;
+					
+				}
+				
+				
+		List<RateType> rateTypeList = new ArrayList<RateType>();
+		@RequestMapping(value = "/addItemSKUConfig/{itemId}", method = RequestMethod.GET)
+		public ModelAndView addItemSKUConfig(HttpServletRequest request, HttpServletResponse response, @PathVariable int itemId) {
 
 			ModelAndView model = null;
 			try {
 					
 					model = new ModelAndView("product/addItemSKUConfig");
 	
-				//	ProductStatus product = new ProductStatus();
-				//	model.addObject("product", product);
+					Item item = new Item();
+					//model.addObject("item", item);
 					
 					
 				HttpSession session = request.getSession();
@@ -1804,8 +1844,48 @@ public class ProductController {
 				List<RawMaterialUom> uomList = new ArrayList<RawMaterialUom>(Arrays.asList(uomArr));					
 				model.addObject("uomList", uomList);
 					
+				map = new LinkedMultiValueMap<>();		
+				map.add("compId", companyId);
+				
+				RateType[] rateTypeArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllRateType", map, RateType[].class);
+				rateTypeList = new ArrayList<RateType>(Arrays.asList(rateTypeArr));	
+				model.addObject("rateTypeList", rateTypeList);
+				
+				if(itemId>0) {
+					System.out.println(itemId+" Found");
+					map = new LinkedMultiValueMap<>();
+					map.add("itemId", itemId);
+					map.add("compId", companyId);
 					
-					model.addObject("title", "Add Item SKU Configuration");
+					
+					item = Constant.getRestTemplate().postForObject(Constant.url + "getItemsById", map, Item.class); 
+					model.addObject("item", item);	
+					System.out.println("itemList------------"+item);
+					
+					
+					SkuConfiguration[] typeListArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllRateTypeByItemId", map, SkuConfiguration[].class);
+					List<SkuConfiguration> typeList = new ArrayList<SkuConfiguration>(Arrays.asList(typeListArr));	
+					model.addObject("typeList", typeList);
+					
+					System.out.println("typeList------------"+typeList);
+					
+					
+					ItemRateIdBean[] arr = Constant.getRestTemplate().postForObject(Constant.url + "getItemRateSkuConfig", map, ItemRateIdBean[].class);
+					List<ItemRateIdBean> itemTypeList = new ArrayList<ItemRateIdBean>(Arrays.asList(arr));					
+					model.addObject("itemTypeList", itemTypeList);
+					
+					SkuItemDtl[] skuDtlArr = Constant.getRestTemplate().postForObject(Constant.url + "getSkuDtlList", map, SkuItemDtl[].class);
+					List<SkuItemDtl> skuDtlList = new ArrayList<SkuItemDtl>(Arrays.asList(skuDtlArr));					
+					model.addObject("skuDtlList", skuDtlList);
+					
+					
+					List<Integer> tagIds = Stream.of(item.getTagIds().split(",")).map(Integer::parseInt)
+							.collect(Collectors.toList());
+					model.addObject("tagIds", tagIds);
+					
+				}
+				
+				model.addObject("title", "Add Item SKU Configuration");
 				}catch (Exception e) {
 					System.out.println("Execption in /addItemSKUConfig : " + e.getMessage());
 					e.printStackTrace();
@@ -1843,5 +1923,313 @@ public class ProductController {
 			return subCatList;
 			
 		}
+		
+		@RequestMapping(value = "/saveItem", method = RequestMethod.POST)
+		public String saveCategory(HttpServletRequest request, HttpServletResponse response, Model model) {
+			Item res = new Item();
+			try {
 				
+				Item item = new Item();				
+				int itemId= 0;
+				try {
+					 itemId= Integer.parseInt(request.getParameter("item_id"));				
+				}catch (Exception e) {
+					e.printStackTrace();
+					 itemId= 0;
+				}
+		
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");					
+			
+//				String tags = request.getParameter("tagIds");
+//				tags = tags.substring(1, tags.length() - 1);
+//				tags = tags.replaceAll("\"", "");		
+//				System.out.println(tags);
+				
+				String tagIds = "0";
+				String[] tags = request.getParameterValues("selectTag");
+				try {
+					if (tags.length > 0) {
+						StringBuilder sb = new StringBuilder();
+						for (String s : tags) {
+						sb.append(s).append(",");
+					}
+						tagIds = sb.deleteCharAt(sb.length() - 1).toString();
+	
+					}else {
+						tagIds = "0";
+					}
+				}catch (Exception e) {
+					e.printStackTrace();
+					tagIds = "0";
+				}
+				System.out.println(tagIds);	
+				
+				item.setItemId(itemId);
+				item.setItemName(request.getParameter("item_name"));
+				item.setItemCode(request.getParameter("item_code"));
+				item.setShortName(request.getParameter("short_name"));
+				item.setItemIsUsed(Integer.parseInt(request.getParameter("status")));
+				item.setCatId(Integer.parseInt(request.getParameter("category")));
+				item.setSubCatId(Integer.parseInt(request.getParameter("sub_category")));
+				item.setProductStatusId(Integer.parseInt(request.getParameter("product_stat")));
+				item.setFlavourId(Integer.parseInt(request.getParameter("flavour")));
+				item.setBrandId(Integer.parseInt(request.getParameter("brand")));
+				item.setTaxId(Integer.parseInt(request.getParameter("tax")));
+				item.setPurchaseUom(Integer.parseInt(request.getParameter("purchase_uom")));
+				item.setStockUom(Integer.parseInt(request.getParameter("stock_uom")));
+				item.setStockToPurchaseUom(request.getParameter("stock_purchase_uom"));
+				item.setMinQty(Integer.parseInt(request.getParameter("min_qty")));
+				item.setIsSalebale(Integer.parseInt(request.getParameter("isSale")));
+				item.setIsBillable(Integer.parseInt(request.getParameter("isBill")));
+				item.setIsDecimal(Integer.parseInt(request.getParameter("isDecimal")));
+				item.setShowInOrderFrquntly(Integer.parseInt(request.getParameter("showOrder")));
+				item.setIsTagApplicable(Integer.parseInt(request.getParameter("isTag")));
+				item.setTagIds(tagIds);
+				item.setCompanyId(companyId);
+				item.setDelStatus(0);
+				
+				System.out.println("Items---------------"+item);
+				
+				 res = Constant.getRestTemplate().postForObject(Constant.url + "insertItem", item, Item.class);
+				 if(res.getItemId()>0) {
+					 model.addAttribute("item", res);
+
+			            session.setAttribute("successMsg", "Item  Saved Sucessfully");
+				 }else {
+					 session.setAttribute("errorMsg", "Failed to Save Item");
+				 }
+			}catch (Exception e) {
+				e.printStackTrace();
+			}
+			return "redirect:addItemSKUConfig/"+res.getItemId();
+		}
+				
+		/********************************************************************************************/
+		
+		
+		
+		@RequestMapping(value = "/saveItemSkuConfig", method = RequestMethod.POST)
+		public String saveItemSkuConfig(HttpServletRequest request, HttpServletResponse response, Model model) {
+			
+			
+			SkuConfiguration config = new SkuConfiguration();
+			
+			int itemId = Integer.parseInt(request.getParameter("itemId"));
+			try{
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");	
+				
+				
+				int skuId = 0;
+				
+				config = new SkuConfiguration();
+			
+					try{
+					skuId = Integer.parseInt(request.getParameter("sku_id"));
+					}catch (Exception e) {
+						e.printStackTrace();
+						skuId = 0;
+					}
+				
+					config.setCompanyId(companyId);
+					config.setDelStatus(0);
+					config.setIsActive(0);
+					config.setItemId(itemId);
+					config.setSaleUom(Integer.parseInt(request.getParameter("sku_uom")));
+					config.setSkuId(skuId);
+					config.setSkuName(request.getParameter("sku_name"));	
+								
+					config.setSkuStockQty(Integer.parseInt(request.getParameter("stock")));
+					config.setStockToSaleUom(request.getParameter("stock_sell"));
+				
+				SkuConfiguration addSku = Constant.getRestTemplate().postForObject(Constant.url + "insertItemSkuConfig", config, SkuConfiguration.class);
+				
+				if(addSku.getSkuId()>0) {
+					List<SkuConfigDetail> skuDtlList = new ArrayList<SkuConfigDetail>();
+					for (int i = 0; i < rateTypeList.size(); i++) {
+						float rate = 0;
+						
+						SkuConfigDetail skuDtl = new SkuConfigDetail();
+						try {
+							rate = Float.parseFloat(request.getParameter("rate"+rateTypeList.get(i).getSkuRateTypeId()));
+						}catch (Exception e) {
+							 rate = 0;
+						}
+						
+						
+						skuDtl.setCompanyId(companyId);
+						skuDtl.setSkuId(addSku.getSkuId());
+						skuDtl.setRateTypeMrp(rate);
+						skuDtl.setRateTypeId(Integer.parseInt(request.getParameter("rateTypeId"+rateTypeList.get(i).getSkuRateTypeId())));
+						skuDtlList.add(skuDtl);
+						
+						//System.out.println("List-----------"+skuDtl);
+					}
+					Info info = Constant.getRestTemplate().postForObject(Constant.url + "insertSkuConfigDtl", skuDtlList, Info.class);
+					
+					if(!info.getError()) {
+						session.setAttribute("successMsg", "Item SKU Configuration Saved Sucessfully");
+					}else {
+						session.setAttribute("errorMsg", "Failed to Save Item SKU Configuration");
+					}
+				}
+				
+			}catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			return "redirect:addItemSKUConfig/"+itemId;
+			
+		}
+		
+		@RequestMapping(value = "/editItem", method = RequestMethod.GET)
+		public String editItem(HttpServletRequest request, HttpServletResponse response) {
+			int itemId = 0;
+			try {
+				itemId = Integer.parseInt(request.getParameter("itemId"));
+				
+			}catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			return "redirect:addItemSKUConfig/"+itemId;
+			
+		}
+		
+		/*******************************************************************************/
+		
+		@RequestMapping(value = "/updtSku", method = RequestMethod.GET)
+		public Info updtSku(HttpServletRequest request, HttpServletResponse response) {
+			int itemId = 0;
+			Info info = new Info();
+			try {
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");	
+				
+				 itemId = Integer.parseInt(request.getParameter("itemId"));
+				 					
+				 int skuId = Integer.parseInt(request.getParameter("skuId"));
+				 if(itemId>0) {
+					MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+					
+					map.add("skuId", skuId);
+					map.add("skuName", request.getParameter("skuName"));
+					map.add("skuUom", Integer.parseInt(request.getParameter("skuUom")));
+					map.add("skuStockQty", Float.parseFloat(request.getParameter("skuStock")));
+					map.add("skuSellStock", Float.parseFloat(request.getParameter("skuSellStock")));					
+					
+					info = Constant.getRestTemplate().postForObject(Constant.url + "updateSkuDtl", map, Info.class);
+					
+					if (!info.getError() ) {
+						try {
+							String jsonStr = request.getParameter("json");
+	
+							ObjectMapper mapper = new ObjectMapper();
+							List<SkuItemDtl> itemList = mapper.readValue(jsonStr, new TypeReference<List<SkuItemDtl>>() {
+							}); 
+							
+							List<SkuConfigDetail> skuDtlList = new ArrayList<SkuConfigDetail>();
+							for (int i = 0; i < itemList.size(); i++) {
+								
+								SkuConfigDetail skuDtl = new SkuConfigDetail();
+								skuDtl.setSkuDetailId(itemList.get(i).getSkuDetailId());
+								skuDtl.setSkuId(skuId);
+								skuDtl.setRateTypeMrp(itemList.get(i).getRateTypeMrp());
+								skuDtl.setRateTypeId(itemList.get(i).getRateTypeId());
+								skuDtl.setCompanyId(companyId);
+								skuDtlList.add(skuDtl);
+								
+								//System.out.println("List-----------"+skuDtl);
+							}	
+							info = Constant.getRestTemplate().postForObject(Constant.url + "insertSkuConfigDtl", skuDtlList, Info.class);
+						}catch (Exception e) {
+							e.printStackTrace();
+						}
+						info.getError();
+						info.getMessage();
+					} else {
+						info.getError();
+						info.getMessage();
+					}
+				 }
+				
+			}catch (Exception e) {
+				System.out.println("Exception in /updtSku : "+ e.getMessage());
+				e.printStackTrace();
+			}
+			return info;
+		}
+		
+		
+		
+		@RequestMapping(value = "/deleteSkuDetail", method = RequestMethod.GET)
+		public Info deleteSkuDetail(HttpServletRequest request, HttpServletResponse response) {
+			Info info = new Info();
+			try {
+				
+				int skuDtlId = Integer.parseInt(request.getParameter("skuDtlId"));
+				System.out.println(skuDtlId+ " =Id----Found");
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				
+				map.add("skuDtlId", skuDtlId);
+				info = Constant.getRestTemplate().postForObject(Constant.url + "deleteSkuConfigDtl", map, Info.class);
+				
+			}catch (Exception e) {
+				System.out.println("Exception in /deleteSkuDetail : "+ e.getMessage());
+				e.printStackTrace();
+			}
+			return info;
+			
+		}
+		
+		
+		@RequestMapping(value = "/deleteItem", method = RequestMethod.GET)
+		public String deleteItem(HttpServletRequest request, HttpServletResponse response) {
+			Info info = new Info();
+			try {
+				
+				HttpSession session = request.getSession();
+				int companyId = (int) session.getAttribute("companyId");	
+				
+				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+				
+				int itemId = Integer.parseInt(request.getParameter("itemId"));
+				map.add("itemId", itemId);
+			
+				
+				info = Constant.getRestTemplate().postForObject(Constant.url + "deleteItemDtl", map, Info.class);
+				
+				if(!info.getError()) {
+					map = new LinkedMultiValueMap<>();
+					map.add("itemId", itemId);
+					map.add("compId", companyId);
+					SkuConfiguration[] skuArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllRateTypeByItemId", 
+							map, SkuConfiguration[].class);
+					List<SkuConfiguration> skuList = new ArrayList<SkuConfiguration>(Arrays.asList(skuArr));
+					map = new LinkedMultiValueMap<>();
+					
+					String skuIdList = "";
+					StringBuilder sb = new StringBuilder();
+					for (int i = 0; i < skuList.size(); i++) {
+						
+						sb.append(skuList.get(i).getSkuId()).append(",");
+					}
+					skuIdList = sb.deleteCharAt(sb.length()-1).toString();
+					
+					//System.out.println("SKU Id List----------"+skuIdList);
+					
+					map.add("itemId", itemId);
+					map.add("skuDtlIds", skuIdList);
+					info = Constant.getRestTemplate().postForObject(Constant.url + "deleteSkuConfigDtlByItemId", map, Info.class);	
+				}
+				
+			}catch (Exception e) {
+				System.out.println("Exception in /deleteItem : "+ e.getMessage());
+				e.printStackTrace();
+			}
+			return  "redirect:/showItemList";
+			
+		}
+		
 }

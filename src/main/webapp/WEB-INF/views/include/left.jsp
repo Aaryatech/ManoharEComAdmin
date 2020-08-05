@@ -85,56 +85,47 @@
 							class="nav-link">Product Status List</a></li>
 							
 					<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/addItemSKUConfig"
+							href="${pageContext.request.contextPath}/showItemList"
+							class="nav-link">Item Show</a></li>					
+					
+							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/addItemSKUConfig/0"
 							class="nav-link">Add Item SKU Configuration</a></li>
 							
-						<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showDeliveryInstructn"
-							class="nav-link">Delivery Instruction List
-						</a></li>
-							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showItemList"
+							class="nav-link">Items List</a></li>		
+														
 					</ul></li>
 					
 					
-				<%-- 	<li class="nav-item nav-item-submenu"><a href="#"
+				<li class="nav-item nav-item-submenu"><a href="#"
 					class="nav-link"><i class="icon-list-unordered"></i><span>Basic Masters</span></a>
 					<ul class="nav nav-group-sub" data-submenu-title="Basic Masters">
 					
 					<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showMnUsers"
-							class="nav-link">User List</a></li>
-							
-					<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showCompanies"
-							class="nav-link">Company List</a></li>
-
-						<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showLanguage"
-							class="nav-link">Language List</a></li>
-						
-						<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showCities"
-							class="nav-link">City List</a></li>
-							
-						<li class="nav-item"><a
-							href="${pageContext.request.contextPath}/showArea"
-							class="nav-link">Area List</a></li>
-						
-						<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showDeliveryInstructn"
-							class="nav-link">Delivery Instruction List</a></li>
-							
-						<li class="nav-item"><a
+							class="nav-link">Delivery Instruction List
+						</a></li>
+						
+					<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showGrievences"
 							class="nav-link">Grievance List</a></li>
 							
-						<li class="nav-item"><a
+					<li class="nav-item"><a
 							href="${pageContext.request.contextPath}/showGrievencesTypeIntructn"
 							class="nav-link">Grievance Type Instruction List</a></li>
 							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showRelatedProductsList"
+							class="nav-link">Related Product Configuration</a></li>
 							
+					<li class="nav-item"><a
+							href="${pageContext.request.contextPath}/showOfferList"
+							class="nav-link">Offer List</a></li>
 
-					</ul></li> --%>
+					</ul></li> 
 					
 					
 
