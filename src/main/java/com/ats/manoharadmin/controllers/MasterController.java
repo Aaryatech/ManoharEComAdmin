@@ -729,7 +729,9 @@ public class MasterController {
 				ConfigRelatedProduct product = new ConfigRelatedProduct();
 				model.addObject("product", product);
 				
-				GetItem[] itemArr = Constant.getRestTemplate().getForObject(Constant.url + "getAllItems", GetItem[].class);
+				map = new LinkedMultiValueMap<>();
+				map.add("compId", companyId);
+				GetItem[] itemArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllRelatedItems", map, GetItem[].class);
 				List<GetItem> itemList = new ArrayList<GetItem>(Arrays.asList(itemArr));
 				model.addObject("itemList", itemList);
 
@@ -738,7 +740,7 @@ public class MasterController {
 				List<Category>	catList = new ArrayList<Category>(Arrays.asList(catArr));
 				model.addObject("catList", catList);
 
-				System.out.println("mCategoryList List---------" + catList);
+			//	System.out.println("mCategoryList List---------" + catList);
 				model.addObject("catList", catList);
 
 				model.addObject("title", "Configure Related Product");
@@ -765,8 +767,9 @@ public class MasterController {
 
 				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 				map.add("itemId", itemId);
+				map.add("compId", companyId);
 
-				GetItem[] itemArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllItemsByitemId", map, GetItem[].class);
+				GetItem[] itemArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllRelatedItemsByItemId", map, GetItem[].class);
 				List<GetItem> itemList = new ArrayList<GetItem>(Arrays.asList(itemArr));
 
 				configItemList.setItemsList(itemList);
@@ -778,7 +781,7 @@ public class MasterController {
 				
 				configItemList.setCatList(catList);
 
-				System.out.println("Config List---------" + itemList);
+				//System.out.println("Config List---------" + itemList);
 
 			} catch (Exception e) {
 				System.out.println("Execption in /configTagItems : " + e.getMessage());
@@ -811,7 +814,7 @@ public class MasterController {
 						sb.append(s).append(",");
 					}
 					itemIdsStr = sb.deleteCharAt(sb.length() - 1).toString();
-					System.out.println("Product---"+itemId+" **** "+itemIdsStr);
+					//System.out.println("Product---"+itemId+" **** "+itemIdsStr);
 
 				}
 				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
@@ -895,7 +898,7 @@ public class MasterController {
 				MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
 				map.add("compId", userDetail.getUser().getCompanyId());
 				
-				GetItem[] itemArr = Constant.getRestTemplate().getForObject(Constant.url + "getAllItems", GetItem[].class);
+				GetItem[] itemArr = Constant.getRestTemplate().postForObject(Constant.url + "getAllRelatedItems", map, GetItem[].class);
 				List<GetItem> itemList = new ArrayList<GetItem>(Arrays.asList(itemArr));
 				model.addObject("itemList", itemList);
 

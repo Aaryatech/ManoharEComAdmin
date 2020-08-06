@@ -55,14 +55,13 @@
 						<div class="card">
 
 							<div
-								class="card-header bg-blue text-white d-flex justify-content-between">
+								class="card-header bg-danger text-white d-flex justify-content-between">
 								<span class="font-size-sm text-uppercase font-weight-semibold card-title">${title}</span>
 								<!--  -->
 								<span
 							class="font-size-sm text-uppercase font-weight-semibold"><a class="card-title"
 							href="${pageContext.request.contextPath}/showRelatedProductsList"
-							style="color: white;"><i
-										class="icon-list2 ml-2"></i>&nbsp;&nbsp;&nbsp;&nbsp;View List</a></span>
+							style="color: white;">Related Product Configure List</a></span>
 							</div>
 							<div class="form-group row"></div>
 							<jsp:include page="/WEB-INF/views/include/response_msg.jsp"></jsp:include>
@@ -202,23 +201,12 @@
 								},
 								function(data) {
 
-									//	alert(JSON.stringify(data.catList));
+										//alert(JSON.stringify(data.itemsList));
+										
 									for (i = 0; i < data.catList.length; i++) {
 
 										var tr = $('<tr style="background:#cbff92;"></tr>');
-										/* tr
-												.append($(
-														'<td style="padding: 7px; line-height:0; border-top: 1px solid #ddd;"></td>')
-														.html(
-																'<input type="checkbox" name="allChk'
-																		+ data.catList[i].catId
-																		+ '" id="allChk'
-																		+ data.catList[i].catId
-																		+ '" value="'
-																		+ data.catList[i].catId
-																		+ '" onclick="selAllItems('
-																		+ data.catList[i].catId
-																		+ ')">'));  */
+										
 										tr
 										.append($(
 												'<td style="padding: 12px; line-height:0; border-top: 1px solid #ddd;""></td>')

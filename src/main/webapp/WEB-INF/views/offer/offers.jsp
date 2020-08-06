@@ -111,7 +111,7 @@
 
 
 							<div
-								class="card-header bg-blue text-white d-flex justify-content-between">
+								class="card-header bg-danger text-white d-flex justify-content-between">
 								<c:choose>
 									<c:when test="${offerId>0}">
 										<span
@@ -1926,7 +1926,6 @@
 				}
 
 			});
-
 		}
 	</script>
 

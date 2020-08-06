@@ -59,7 +59,7 @@
 				<div class="card">
 
 					<div
-						class="card-header bg-blue text-white d-flex justify-content-between">
+						class="card-header bg-danger text-white d-flex justify-content-between">
 						<span
 							class="font-size-sm text-uppercase font-weight-semibold card-title">
 							Offer List </span>
